@@ -45,11 +45,11 @@ impl Iterator for SquareWave {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.samples = self.samples.wrapping_add(1);
-        if self.samples > 100 {
+        if self.samples > 200 {
             self.samples = 0;
         }
 
-        if self.samples < 50 {
+        if self.samples < 100 {
             Some(-0.2)
         } else {
             Some(0.2)
