@@ -15,7 +15,7 @@ use rodio::{source::Source, OutputStream, OutputStreamHandle, Sink};
 /// When used once, this is fine. Multiple times will leak memory.
 #[derive(Resource)]
 pub struct AudioOutput {
-    stream_handle: Option<OutputStreamHandle>,
+    pub(crate) stream_handle: Option<OutputStreamHandle>,
 }
 
 impl Default for AudioOutput {
@@ -51,9 +51,11 @@ pub fn play_queued_audio_system(
 }
 
 pub fn play_single_audio_startup_system(mut audio_output: ResMut<AudioOutput>) {
+    /*
     if let Some(stream_handle) = &audio_output.stream_handle {
         println!("here");
         let square_wave = SquareWave { samples: 0 };
         stream_handle.play_raw(square_wave);
     }
+    */
 }
