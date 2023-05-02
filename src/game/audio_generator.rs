@@ -177,6 +177,86 @@ impl Iterator for SquareWave {
     }
 }
 
+pub struct SawWave {
+    frequency: f32,
+    period: f32,
+}
+
+impl SawWave {
+    pub fn new(frequency: f32) -> Self {
+        Self {
+            frequency,
+            period: 0.,
+        }
+    }
+
+    pub fn as_raw(self) -> RawSource {
+        RawSource::new(self)
+    }
+}
+
+impl Oscillator for SawWave {
+    fn set_frequency(&mut self, frequency: f32) {
+        self.frequency = frequency;
+    }
+}
+
+impl Iterator for SawWave {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let p_step = self.frequency / SAMPLE_RATE;
+
+        self.period += p_step;
+        if self.period > 1.0 {
+            self.period -= 1.0;
+        }
+
+        // Goes from 0.5 to -0.5 linearly
+        Some((1.0 - self.period) - 0.5)
+    }
+}
+
+pub struct RampWave {
+    frequency: f32,
+    period: f32,
+}
+
+impl RampWave {
+    pub fn new(frequency: f32) -> Self {
+        Self {
+            frequency,
+            period: 0.,
+        }
+    }
+
+    pub fn as_raw(self) -> RawSource {
+        RawSource::new(self)
+    }
+}
+
+impl Oscillator for RampWave {
+    fn set_frequency(&mut self, frequency: f32) {
+        self.frequency = frequency;
+    }
+}
+
+impl Iterator for RampWave {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let p_step = self.frequency / SAMPLE_RATE;
+
+        self.period += p_step;
+        if self.period > 1.0 {
+            self.period -= 1.0;
+        }
+
+        // Goes from -0.5 to 0.5 linearly
+        Some(self.period - 0.5)
+    }
+}
+
 pub struct Vca {
     source: RawSource,
     envelope: RawSource,
