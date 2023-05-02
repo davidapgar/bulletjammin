@@ -1,3 +1,4 @@
+use super::audio::Audio;
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
@@ -33,7 +34,18 @@ impl Default for AudioOutput {
     }
 }
 
-impl AudioOutput {}
+impl AudioOutput {
+    fn play_audio(&self, audio: &mut Audio) {
+        let Some(stream_handle) = &self.stream_handle else {
+            return;
+        };
+
+        let mut queue = audio.queue.write().unwrap();
+        while let Some(source) = queue.pop_front() {
+            stream_handle.play_raw(source);
+        }
+    }
+}
 
 #[derive(Resource, TypeUuid)]
 #[uuid = "D6913CD1-1B92-46FB-8298-1974DB6A7CC4"]
@@ -41,18 +53,6 @@ pub struct AudioSink {
     sink: Sink,
 }
 
-pub fn play_queued_audio_system(
-    audio_output: Res<AudioOutput>,
-    mut sinks: ResMut<Assets<AudioSink>>,
-) {
-}
-
-pub fn play_single_audio_startup_system(mut audio_output: ResMut<AudioOutput>) {
-    /*
-    if let Some(stream_handle) = &audio_output.stream_handle {
-        println!("here");
-        let square_wave = SquareWave { samples: 0 };
-        stream_handle.play_raw(square_wave);
-    }
-    */
+pub fn play_queued_audio_system(audio_output: Res<AudioOutput>, mut audio: ResMut<Audio>) {
+    audio_output.play_audio(&mut audio);
 }

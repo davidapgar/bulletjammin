@@ -4,13 +4,13 @@ use std::time::Duration;
 /// Type-erased wrapper around a source.
 /// Has 1 channel, sample_rate of 44100
 pub struct RawSource {
-    source: Box<dyn Iterator<Item = f32> + Send>,
+    source: Box<dyn Iterator<Item = f32> + Send + Sync>,
 }
 
 impl RawSource {
     pub fn new<T>(source: T) -> RawSource
     where
-        T: Iterator<Item = f32> + Send + 'static,
+        T: Iterator<Item = f32> + Send + Sync + 'static,
     {
         RawSource {
             source: Box::new(source),
@@ -46,7 +46,7 @@ impl Iterator for RawSource {
 
 pub fn as_raw_source<T>(source: T) -> RawSource
 where
-    T: Iterator<Item = f32> + Send + 'static,
+    T: Iterator<Item = f32> + Send + Sync + 'static,
 {
     RawSource::new(source)
 }
@@ -62,12 +62,12 @@ const C2: f32 = 65.41;
 /// Convert a "voltage" to a frequency
 /// Scale of -1.0 to 1.0 as -10 to 10 volts
 /// Each 0.1 is considered a "volt"
-fn frequency_per_volt(volt: f32) -> f32 {
+pub fn frequency_per_volt(volt: f32) -> f32 {
     C2 * 2.0_f32.powf(volt.clamp(-1.0, 1.0) * 10.0)
 }
 
 /// Convert a frequency into "voltage", then scale to -1.0..1.0
-fn volts_per_frequency(frequency: f32) -> f32 {
+pub fn volts_per_frequency(frequency: f32) -> f32 {
     (frequency / C2).log2() / 10.0
 }
 
@@ -310,6 +310,10 @@ impl Vca {
     pub fn new(source: RawSource, envelope: RawSource) -> Self {
         Vca { source, envelope }
     }
+
+    pub fn as_raw(self) -> RawSource {
+        RawSource::new(self)
+    }
 }
 
 impl Iterator for Vca {
@@ -350,6 +354,10 @@ impl Envelope {
             release,
             time: 0.,
         }
+    }
+
+    pub fn as_raw(self) -> RawSource {
+        RawSource::new(self)
     }
 }
 
