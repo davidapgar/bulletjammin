@@ -19,7 +19,7 @@ fn audio_startup(mut audio_output: ResMut<AudioOutput>) {
         println!("here");
         let vca = Vca::new(
             as_raw_source(SquareWave::default()),
-            as_raw_source(Envelope::new(0.5, 1.0)),
+            as_raw_source(Envelope::new(0.2, 0.1, 0.2, 1.0)),
         );
         stream_handle.play_raw(as_raw_source(vca));
     }

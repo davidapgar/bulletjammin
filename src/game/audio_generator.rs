@@ -89,9 +89,9 @@ impl Iterator for SquareWave {
         }
 
         if self.period < 0.5 {
-            Some(0.2)
+            Some(1.0)
         } else {
-            Some(-0.2)
+            Some(-1.0)
         }
     }
 }
@@ -126,17 +126,23 @@ impl Iterator for Vca {
 pub struct Envelope {
     /// Maximum amplitude of the envelope, from 0.0 to 1.0
     amplitude: f32,
-    /// Length of the envelope, in seconds.
-    length: f32,
-    /// Running time of the envelope
+    /// Time in seconds of attack
+    attack: f32,
+    /// Time in seconds of hold
+    hold: f32,
+    /// Time in seconds of release
+    release: f32,
+    /// Time that has elapsed.
     time: f32,
 }
 
 impl Envelope {
-    pub fn new(amplitude: f32, length: f32) -> Self {
+    pub fn new(amplitude: f32, attack: f32, hold: f32, release: f32) -> Self {
         Envelope {
             amplitude: amplitude.clamp(0.0, 1.0),
-            length,
+            attack,
+            hold,
+            release,
             time: 0.,
         }
     }
@@ -147,13 +153,20 @@ impl Iterator for Envelope {
 
     fn next(&mut self) -> Option<Self::Item> {
         const STEP: f32 = 1. / 44100.;
+        let time = self.time;
+        self.time += STEP;
 
-        if self.time > self.length {
-            None
-        } else {
-            let res = self.amplitude * (self.time / self.length);
-            self.time += STEP;
+        if self.time < self.attack {
+            let res = self.amplitude * (time / self.attack);
             Some(res)
+        } else if self.time < self.attack + self.hold {
+            Some(self.amplitude)
+        } else if self.time < self.attack + self.hold + self.release {
+            let res = self.amplitude * (1.0 - ((time - (self.attack + self.hold)) / self.release));
+            Some(res)
+        } else {
+            self.time = time;
+            None
         }
     }
 }
