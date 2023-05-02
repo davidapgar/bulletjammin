@@ -45,7 +45,6 @@ pub struct AudioSink {
 
 pub fn play_queued_audio_system(
     audio_output: Res<AudioOutput>,
-    audio_sources: Option<Res<Assets<SquareWave>>>,
     mut sinks: ResMut<Assets<AudioSink>>,
 ) {
 }
