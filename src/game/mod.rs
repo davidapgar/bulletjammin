@@ -1,8 +1,6 @@
-use audio_generator::{as_raw_source, Envelope, RawSource, SquareWave, Vca};
+use audio_generator::{as_raw_source, Envelope, SquareWave, Vca};
 use audio_output::AudioOutput;
 use bevy::prelude::*;
-use bevy::utils::Duration;
-use rodio::source::Source;
 
 pub mod audio_generator;
 pub mod audio_output;

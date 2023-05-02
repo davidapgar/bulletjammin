@@ -52,24 +52,6 @@ impl Default for SquareWave {
     }
 }
 
-impl Source for SquareWave {
-    fn current_frame_len(&self) -> Option<usize> {
-        None
-    }
-
-    fn channels(&self) -> u16 {
-        1
-    }
-
-    fn sample_rate(&self) -> u32 {
-        44100
-    }
-
-    fn total_duration(&self) -> Option<Duration> {
-        None
-    }
-}
-
 impl Iterator for SquareWave {
     type Item = f32;
 
@@ -137,13 +119,13 @@ impl Iterator for Envelope {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        const step: f32 = 1. / 44100.;
+        const STEP: f32 = 1. / 44100.;
 
         if self.time > self.length {
             None
         } else {
             let res = self.amplitude * (self.time / self.length);
-            self.time += step;
+            self.time += STEP;
             Some(res)
         }
     }

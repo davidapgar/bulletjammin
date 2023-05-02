@@ -1,8 +1,6 @@
-use super::SquareWave;
-use bevy::asset::Asset;
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
-use rodio::{source::Source, OutputStream, OutputStreamHandle, Sink};
+use rodio::{OutputStream, OutputStreamHandle, Sink};
 
 /// Copy-pasta from bevy_audio.
 ///
