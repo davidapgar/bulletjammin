@@ -257,6 +257,50 @@ impl Iterator for RampWave {
     }
 }
 
+pub struct SuperSaw {
+    frequency: f32,
+    sub_oscillators: Vec<SawWave>,
+}
+
+impl SuperSaw {
+    pub fn new(frequency: f32) -> Self {
+        let mut sub_oscillators = Vec::<SawWave>::new();
+        for i in 0..8 {
+            sub_oscillators.push(SawWave::new(frequency));
+        }
+        let mut super_saw = SuperSaw {
+            frequency,
+            sub_oscillators,
+        };
+
+        super_saw.set_frequency(frequency);
+
+        super_saw
+    }
+}
+
+impl Oscillator for SuperSaw {
+    fn set_frequency(&mut self, frequency: f32) {
+        let mut offset = 0. - (self.sub_oscillators.len() / 2) as f32;
+        for sub in &mut self.sub_oscillators {
+            sub.set_frequency(frequency + offset);
+            offset += 1.;
+        }
+    }
+}
+
+impl Iterator for SuperSaw {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut res = 0.0;
+        for sub in &mut self.sub_oscillators {
+            res += sub.next().unwrap();
+        }
+        Some(res)
+    }
+}
+
 pub struct Vca {
     source: RawSource,
     envelope: RawSource,

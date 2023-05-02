@@ -18,10 +18,11 @@ fn audio_startup(mut audio_output: ResMut<AudioOutput>) {
     if let Some(stream_handle) = &audio_output.stream_handle {
         println!("here");
         let vco = Vco::new(
-            SquareWave::new(440.),
+            //SawWave::new(440.),
+            SuperSaw::new(440.),
             220.,
-            Some(Attenuator::new(SawWave::new(10.).as_raw(), 0.1).as_raw()),
-            //None,
+            //Some(Attenuator::new(SawWave::new(10.).as_raw(), 0.1).as_raw()),
+            None,
         );
         let vca = Vca::new(
             as_raw_source(vco),
