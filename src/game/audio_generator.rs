@@ -42,13 +42,29 @@ where
     }
 }
 
+const SAMPLE_RATE: f32 = 44100.0;
+
 pub struct SquareWave {
-    samples: u32,
+    /// Frequence of the square wave, in Hz
+    frequency: f32,
+    period: f32,
+}
+
+impl SquareWave {
+    fn new(frequency: f32) -> Self {
+        SquareWave {
+            frequency,
+            period: 0.,
+        }
+    }
 }
 
 impl Default for SquareWave {
     fn default() -> Self {
-        SquareWave { samples: 0 }
+        SquareWave {
+            frequency: 440.,
+            period: 0.,
+        }
     }
 }
 
@@ -56,15 +72,26 @@ impl Iterator for SquareWave {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.samples = self.samples.wrapping_add(1);
-        if self.samples > 100 {
-            self.samples = 0;
+        // Calculate period for frequency and sample rate
+        // period = 1sec / frequency, or sample_rate / frequency (for 44100, 221 = 200)
+        // from that, get step length (to scale internal period from 0.0 to 1.0)
+        // as 1 / period (eg, 1 / 200 = 0.005)
+        // Add to current period. If > 1.0, -= 1.0.
+        // if period < 0.5 high, else low
+        //
+        // so each sample requested, adjust period by 1 / sample_rate / frequency
+        // or: p_step = frequency / sample_rate
+        let p_step = self.frequency / SAMPLE_RATE;
+
+        self.period += p_step;
+        if self.period > 1.0 {
+            self.period -= 1.0;
         }
 
-        if self.samples < 50 {
-            Some(-0.2)
-        } else {
+        if self.period < 0.5 {
             Some(0.2)
+        } else {
+            Some(-0.2)
         }
     }
 }
