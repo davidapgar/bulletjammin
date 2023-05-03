@@ -59,23 +59,23 @@ fn button_system(keyboard_input: Res<Input<KeyCode>>, audio: ResMut<Audio>) {
         keys.push(0);
     }
     if keyboard_input.just_pressed(KeyCode::W) {
-        keys.push(1);
-    }
-    if keyboard_input.just_pressed(KeyCode::E) {
         keys.push(2);
     }
+    if keyboard_input.just_pressed(KeyCode::E) {
+        keys.push(4);
+    }
     if keyboard_input.just_pressed(KeyCode::R) {
-        keys.push(3);
+        keys.push(5);
     }
     if keyboard_input.just_pressed(KeyCode::T) {
-        keys.push(4);
+        keys.push(7);
     }
 
     for key in keys {
         let frequency = frequency_per_volt(key as f32 / 120.0 + 0.2);
         let vca = Vca::new(
             SawWave::new(frequency).as_raw(),
-            Envelope::new(0.2, 0.1, 0.05, 0.2).as_raw(),
+            Envelope::new(0.3, 0.1, 0.05, 0.2).as_raw(),
         );
         audio.play(vca.as_raw());
     }
