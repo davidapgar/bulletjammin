@@ -1,5 +1,6 @@
 use super::audio::audio_generator::*;
 use super::audio::Audio;
+use super::player::Player;
 use bevy::prelude::*;
 
 pub struct WorldPlugin;
@@ -39,9 +40,6 @@ impl Default for Song {
 struct Background;
 
 #[derive(Component)]
-struct Player;
-
-#[derive(Component)]
 struct Wall;
 
 #[derive(Component)]
@@ -53,9 +51,9 @@ enum BulletType {
 }
 
 #[derive(Component)]
-struct WorldPosition {
-    position: Vec2,
-    layer: f32,
+pub struct WorldPosition {
+    pub position: Vec2,
+    pub layer: f32,
 }
 
 // TODO: This should likely be a resource. Also does this make sense?
@@ -75,7 +73,7 @@ impl World {
 struct Moveable(Vec2);
 
 impl WorldPosition {
-    fn new(position: Vec2, layer: f32) -> Self {
+    pub fn new(position: Vec2, layer: f32) -> Self {
         Self { position, layer }
     }
 }

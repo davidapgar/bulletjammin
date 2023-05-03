@@ -4,6 +4,7 @@ use audio::Audio;
 use bevy::prelude::*;
 
 pub mod audio;
+pub mod player;
 pub mod world;
 
 pub struct Plugin;
@@ -14,7 +15,8 @@ impl bevy::app::Plugin for Plugin {
             .insert_resource(Audio::default())
             .add_system(button_system);
         app.add_plugin(audio::AudioPlugin)
-            .add_plugin(world::WorldPlugin);
+            .add_plugin(world::WorldPlugin)
+            .add_plugin(player::PlayerPlugin);
     }
 }
 
