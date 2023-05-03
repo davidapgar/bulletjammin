@@ -2,8 +2,10 @@ use audio::audio_generator::*;
 use audio::audio_output::{play_queued_audio_system, AudioOutput};
 use audio::Audio;
 use bevy::prelude::*;
+use world::WorldPlugin;
 
 pub mod audio;
+pub mod world;
 
 pub struct Plugin;
 
@@ -11,9 +13,9 @@ impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(AudioOutput::default())
             .insert_resource(Audio::default())
-            //            .add_startup_system(audio_startup)
             .add_system(button_system);
-        app.add_plugin(audio::AudioPlugin);
+        app.add_plugin(audio::AudioPlugin)
+            .add_plugin(world::WorldPlugin);
     }
 }
 
