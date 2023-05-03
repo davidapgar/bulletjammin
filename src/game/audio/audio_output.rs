@@ -1,4 +1,4 @@
-use super::audio::Audio;
+use super::Audio;
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
 use rodio::{OutputStream, OutputStreamHandle, Sink};
