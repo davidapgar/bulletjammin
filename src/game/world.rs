@@ -65,6 +65,12 @@ struct World {
     size: Vec2,
 }
 
+impl World {
+    fn in_bounds(&self, pos: &Vec2) -> bool {
+        pos.x >= 0. && pos.y >= 0. && pos.x <= self.size.x * 16. && pos.y <= self.size.y * 16.
+    }
+}
+
 #[derive(Component)]
 struct Moveable(Vec2);
 
@@ -199,9 +205,18 @@ fn spawn_system(
     }
 }
 
-fn move_system(mut query: Query<(&mut WorldPosition, &Moveable)>) {
-    for (mut world_position, moveable) in query.iter_mut() {
+fn move_system(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut WorldPosition, &Moveable)>,
+    world_query: Query<&World>,
+) {
+    let world = world_query.single();
+
+    for (entity, mut world_position, moveable) in query.iter_mut() {
         world_position.position += moveable.0;
+        if !world.in_bounds(&world_position.position) {
+            commands.entity(entity).despawn();
+        }
     }
 }
 
