@@ -42,7 +42,7 @@ impl AudioOutput {
 
         let mut queue = audio.queue.write().unwrap();
         while let Some(source) = queue.pop_front() {
-            stream_handle.play_raw(source);
+            stream_handle.play_raw(source).unwrap();
         }
     }
 }

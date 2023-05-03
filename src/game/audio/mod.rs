@@ -18,7 +18,7 @@ impl bevy::app::Plugin for AudioPlugin {
     }
 }
 
-fn audio_startup(mut audio_output: ResMut<AudioOutput>) {
+fn audio_startup(audio_output: ResMut<AudioOutput>) {
     if let Some(stream_handle) = &audio_output.stream_handle {
         println!("here");
         let vco = Vco::new(
@@ -32,7 +32,7 @@ fn audio_startup(mut audio_output: ResMut<AudioOutput>) {
             as_raw_source(vco),
             as_raw_source(Envelope::new(0.2, 0.1, 0.2, 1.0)),
         );
-        stream_handle.play_raw(as_raw_source(vca));
+        stream_handle.play_raw(as_raw_source(vca)).unwrap();
     }
 }
 

@@ -1,8 +1,7 @@
 use audio::audio_generator::*;
-use audio::audio_output::{play_queued_audio_system, AudioOutput};
+use audio::audio_output::AudioOutput;
 use audio::Audio;
 use bevy::prelude::*;
-use world::WorldPlugin;
 
 pub mod audio;
 pub mod world;
@@ -22,11 +21,7 @@ impl bevy::app::Plugin for Plugin {
 fn button_system(keyboard_input: Res<Input<KeyCode>>, audio: ResMut<Audio>) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         println!("Here");
-        let vco = Vco::new(
-            SuperSaw::new(440.),
-            220.,
-            Some(Attenuator::new(SawWave::new(10.).as_raw(), 0.1).as_raw()),
-        );
+        let vco = Vco::new(SuperSaw::new(440.), 220., None);
         let vca = Vca::new(
             as_raw_source(vco),
             as_raw_source(Envelope::new(0.2, 0.1, 0.2, 1.0)),

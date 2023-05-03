@@ -80,7 +80,7 @@ pub struct Vco<T: Oscillator + Iterator<Item = f32>> {
 
 impl<T> Vco<T>
 where
-    T: Oscillator + Iterator<Item = f32>,
+    T: Oscillator + Iterator<Item = f32> + Send + Sync + 'static,
 {
     pub fn new(mut oscillator: T, base_frequency: f32, cv: Option<RawSource>) -> Self {
         oscillator.set_frequency(base_frequency);
@@ -92,6 +92,10 @@ where
             cv,
             last_cv: 0.0,
         }
+    }
+
+    pub fn as_raw(self) -> RawSource {
+        RawSource::new(self)
     }
 }
 
@@ -258,20 +262,16 @@ impl Iterator for RampWave {
 }
 
 pub struct SuperSaw {
-    frequency: f32,
     sub_oscillators: Vec<SawWave>,
 }
 
 impl SuperSaw {
     pub fn new(frequency: f32) -> Self {
         let mut sub_oscillators = Vec::<SawWave>::new();
-        for i in 0..8 {
+        for _ in 0..8 {
             sub_oscillators.push(SawWave::new(frequency));
         }
-        let mut super_saw = SuperSaw {
-            frequency,
-            sub_oscillators,
-        };
+        let mut super_saw = SuperSaw { sub_oscillators };
 
         super_saw.set_frequency(frequency);
 
