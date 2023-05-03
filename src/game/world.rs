@@ -172,26 +172,30 @@ fn spawn_system(
             2 => 4,
             3 => 5,
             4 => 7,
+            5 => 5,
+            6 => 4,
+            7 => 2,
+            8 => 0,
             _ => 0,
         };
         let frequency = frequency_per_volt(note as f32 / 120.0 + 0.2);
         let vca = Vca::new(
             Vco::new(
-                SawWave::new(frequency),
+                SquareWave::new(frequency),
                 frequency,
-                Some(Attenuator::new(RampWave::new(10.).as_raw(), 0.01).as_raw()),
+                Some(Attenuator::new(RampWave::new(30.).as_raw(), 0.02).as_raw()),
             )
             .as_raw(),
-            Envelope::new(0.3, 0.1, 0.05, 0.2).as_raw(),
+            Envelope::new(0.3, 0.05, 0.05, 0.2).as_raw(),
         );
         audio.play(vca.as_raw());
 
         song.idx += 1;
-        if song.idx >= 5 {
+        if song.idx >= 8 {
             song.idx = 0;
         }
 
-        song.timer = Timer::from_seconds(0.5, TimerMode::Once);
+        song.timer = Timer::from_seconds(0.25, TimerMode::Once);
     }
 }
 
