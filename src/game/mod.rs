@@ -53,7 +53,7 @@ fn button_system(keyboard_input: Res<Input<KeyCode>>, audio: ResMut<Audio>) {
     for key in keys {
         let frequency = frequency_per_volt(key as f32 / 120.0 + 0.2);
         let vca = Vca::new(
-            SawWave::new(frequency).as_raw(),
+            Vcf::new(SquareWave::new(frequency).as_raw(), frequency, 0.2).as_raw(),
             Envelope::new(0.3, 0.1, 0.05, 0.2).as_raw(),
         );
         audio.play(vca.as_raw());

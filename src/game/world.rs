@@ -184,10 +184,15 @@ fn spawn_system(
         };
         let frequency = frequency_per_volt(note as f32 / 120.0 + 0.2);
         let vca = Vca::new(
-            Vco::new(
-                SquareWave::new(frequency),
+            Vcf::new(
+                Vco::new(
+                    SquareWave::new(frequency),
+                    frequency,
+                    Some(Attenuator::new(RampWave::new(30.).as_raw(), 0.02).as_raw()),
+                )
+                .as_raw(),
                 frequency,
-                Some(Attenuator::new(RampWave::new(30.).as_raw(), 0.02).as_raw()),
+                0.5,
             )
             .as_raw(),
             Envelope::new(0.3, 0.05, 0.05, 0.2).as_raw(),

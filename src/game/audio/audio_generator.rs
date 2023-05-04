@@ -301,6 +301,77 @@ impl Iterator for SuperSaw {
     }
 }
 
+///! From [LP and HP Filter](https://www.musicdsp.org/en/latest/Filters/38-lp-and-hp-filter.html)
+pub struct Vcf {
+    source: RawSource,
+    frequency: f32,
+    resonance: f32,
+
+    input: [f32; 2],
+    output: [f32; 2],
+    // Cached when frequency changes
+    c: f32,
+}
+
+impl Vcf {
+    pub fn new(source: RawSource, frequency: f32, resonance: f32) -> Self {
+        let mut vcf = Self {
+            source,
+            frequency,
+            resonance,
+            input: [0., 0.],
+            output: [0., 0.],
+            c: 0.0,
+        };
+
+        vcf.set_frequency(frequency);
+        vcf
+    }
+
+    pub fn as_raw(self) -> RawSource {
+        RawSource::new(self)
+    }
+}
+
+impl Oscillator for Vcf {
+    fn set_frequency(&mut self, frequency: f32) {
+        self.frequency = frequency;
+        self.c = 1.0 / (std::f32::consts::PI * frequency / SAMPLE_RATE as f32).tan();
+    }
+}
+
+impl Iterator for Vcf {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let Some(input) = self.source.next() else {
+            return None;
+        };
+
+        let r = self.resonance;
+        let c = self.c;
+        let c2 = self.c * self.c;
+
+        let a1 = 1.0 / (1.0 + (r * c) + c2);
+        let a2 = 2.0 * a1;
+        let a3 = a1;
+        let b1 = 2.0 * (1.0 - c2) * a1;
+        let b2 = (1.0 - (r * c) + c2) * a1;
+
+        let output = (a1 * input) + (a2 * self.input[0]) + (a3 * self.input[1])
+            - (b1 * self.output[0])
+            - (b2 * self.output[1]);
+
+        self.input[1] = self.input[0];
+        self.input[0] = input;
+
+        self.output[1] = self.output[0];
+        self.output[0] = output;
+
+        Some(output)
+    }
+}
+
 pub struct Vca {
     source: RawSource,
     envelope: RawSource,
