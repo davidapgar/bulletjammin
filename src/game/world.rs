@@ -40,7 +40,7 @@ impl Default for Song {
 struct Background;
 
 #[derive(Component)]
-struct Wall;
+pub struct Wall;
 
 #[derive(Component)]
 pub struct Bullet(pub BulletType);
