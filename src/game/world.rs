@@ -10,9 +10,9 @@ impl bevy::app::Plugin for WorldPlugin {
         app.insert_resource(Sprites::default())
             .insert_resource(Song::default())
             .add_startup_system(world_startup)
-            .add_system(transform_world_system)
             .add_system(spawn_system)
-            .add_system(move_system);
+            .add_system(move_system)
+            .add_system(transform_world_system.after(spawn_system));
     }
 }
 
@@ -86,20 +86,24 @@ fn world_startup(
 ) {
     commands.spawn(Camera2dBundle::default());
 
-    let (player_sprite, floor_sprite, blast_sprite) = (
+    let (player_sprite, floor_sprite, wall_sprite, blast_sprite) = (
         asset_server.load("sprites/player.png"),
         asset_server.load("sprites/floor.png"),
+        asset_server.load("sprites/wall.png"),
         asset_server.load("sprites/blast.png"),
     );
-    let (player_atlas, floor_atlas, blast_atlas) = (
+
+    let (player_atlas, floor_atlas, wall_atlas, blast_atlas) = (
         TextureAtlas::from_grid(player_sprite, Vec2::new(16.0, 16.0), 8, 1, None, None),
         TextureAtlas::from_grid(floor_sprite, Vec2::new(16.0, 16.0), 1, 1, None, None),
+        TextureAtlas::from_grid(wall_sprite, Vec2::new(16.0, 16.0), 1, 1, None, None),
         TextureAtlas::from_grid(blast_sprite, Vec2::new(8.0, 8.0), 2, 1, None, None),
     );
 
-    let (player_handle, floor_handle, blast_handle) = (
+    let (player_handle, floor_handle, wall_handle, blast_handle) = (
         texture_atlases.add(player_atlas),
         texture_atlases.add(floor_atlas),
+        texture_atlases.add(wall_atlas),
         texture_atlases.add(blast_atlas),
     );
 
@@ -112,31 +116,49 @@ fn world_startup(
             ..default()
         },
         Player,
-        WorldPosition::new(Vec2::new(0., 0.), 1.),
+        WorldPosition::new(Vec2::new(5. * 16., 5. * 16.), 1.),
     ));
 
-    commands.spawn((
-        SpriteSheetBundle {
-            texture_atlas: blast_handle,
-            ..default()
-        },
-        Bullet(BulletType::Enemy),
-        Moveable(Vec2::new(4., 0.)),
-        WorldPosition::new(Vec2::new(0., 16.), 1.),
-    ));
-
-    spawn_world_grid(&mut commands, floor_handle);
+    spawn_world_grid(&mut commands, floor_handle, wall_handle);
 }
 
-fn spawn_world_grid(commands: &mut Commands, floor_handle: Handle<TextureAtlas>) {
-    let (w, h) = (10, 10);
+fn spawn_world_grid(
+    commands: &mut Commands,
+    floor_handle: Handle<TextureAtlas>,
+    wall_handle: Handle<TextureAtlas>,
+) {
+    let (w, h) = (25, 18);
 
     commands.spawn(World {
         size: Vec2::new(w as f32, h as f32),
     });
 
-    for x in 0..w {
-        for y in 0..h {
+    for x in [0, w] {
+        for y in 0..h + 1 {
+            commands.spawn((
+                SpriteSheetBundle {
+                    texture_atlas: wall_handle.clone(),
+                    ..default()
+                },
+                Wall,
+                WorldPosition::new(Vec2::new((x * 16) as f32, (y * 16) as f32), 0.),
+            ));
+        }
+    }
+    for y in [0, h] {
+        for x in 1..w {
+            commands.spawn((
+                SpriteSheetBundle {
+                    texture_atlas: wall_handle.clone(),
+                    ..default()
+                },
+                Wall,
+                WorldPosition::new(Vec2::new((x * 16) as f32, (y * 16) as f32), 0.),
+            ));
+        }
+    }
+    for x in 1..w {
+        for y in 1..h {
             commands.spawn((
                 SpriteSheetBundle {
                     texture_atlas: floor_handle.clone(),
@@ -163,6 +185,7 @@ fn spawn_system(
         commands.spawn((
             SpriteSheetBundle {
                 texture_atlas: sprites.blast.clone(),
+                transform: Transform::from_translation(Vec3::new(0., 0., -1.)),
                 ..default()
             },
             Bullet(BulletType::Enemy),
@@ -222,9 +245,10 @@ fn move_system(
 }
 
 fn transform_world_system(mut query: Query<(&mut Transform, &WorldPosition)>) {
+    let world_offset = Vec2::new(25. * 8., 18. * 8.);
     for (mut transform, world_position) in query.iter_mut() {
         *transform = Transform::from_translation(
-            (world_position.position * 2.).extend(world_position.layer),
+            ((world_position.position - world_offset) * 2.).extend(world_position.layer),
         )
         .with_scale(Vec3::splat(2.0));
     }
