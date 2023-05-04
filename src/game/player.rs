@@ -1,5 +1,6 @@
-use super::world::WorldPosition;
+use super::world::{Bullet, BulletType, WorldPosition};
 use bevy::prelude::*;
+use bevy::sprite::collide_aabb::collide;
 
 // !!!!!!!!!
 // Implement collisions
@@ -17,7 +18,8 @@ pub struct PlayerPlugin;
 
 impl bevy::app::Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(player_input_system);
+        app.add_system(player_input_system)
+            .add_system(player_bullet_system);
     }
 }
 
@@ -42,4 +44,34 @@ fn player_input_system(
     }
 
     player.position += movement;
+}
+
+fn player_bullet_system(
+    mut commands: Commands,
+    player_query: Query<&WorldPosition, (With<Player>, Without<Bullet>)>,
+    bullet_query: Query<(Entity, &WorldPosition, &Bullet), (With<Bullet>, Without<Player>)>,
+) {
+    let bullet_size = Vec2::new(8., 8.);
+    for player in &player_query {
+        let player_pos = player.position.extend(0.);
+        let player_size = Vec2::new(16., 16.);
+
+        let filtered = bullet_query.iter().filter_map(|(entity, pos, bullet)| {
+            if let BulletType::Enemy = bullet.0 {
+                Some((entity, pos))
+            } else {
+                None
+            }
+        });
+        for (entity, bullet) in filtered {
+            if let Some(collision) = collide(
+                player_pos,
+                player_size,
+                bullet.position.extend(0.),
+                bullet_size,
+            ) {
+                commands.entity(entity).despawn();
+            }
+        }
+    }
 }

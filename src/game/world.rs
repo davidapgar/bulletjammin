@@ -43,9 +43,9 @@ struct Background;
 struct Wall;
 
 #[derive(Component)]
-struct Bullet(BulletType);
+pub struct Bullet(pub BulletType);
 
-enum BulletType {
+pub enum BulletType {
     Player,
     Enemy,
 }
