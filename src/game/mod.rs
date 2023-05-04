@@ -51,9 +51,10 @@ fn button_system(keyboard_input: Res<Input<KeyCode>>, audio: ResMut<Audio>) {
         let frequency = frequency_per_volt(key as f32 / 120.0 + 0.2);
         let vca = Vca::new(
             Vco::new(
-                Vcf::new(SquareWave::new(frequency), frequency, 0.2),
+                Vcf::new(SquareWave::new(frequency), frequency, 1.41),
+                //Vcf::new(SquareWave::new(frequency), frequency, 0.1),
                 frequency / 2.,
-                Envelope::new(0.3, 0.2, 0.05, 0.2),
+                Envelope::new(0.6, 0.2, 0.05, 0.2),
             ),
             Envelope::new(0.3, 0.1, 0.05, 0.2),
         );

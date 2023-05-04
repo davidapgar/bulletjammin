@@ -338,6 +338,8 @@ impl Iterator for SuperSaw {
 }
 
 ///! From [LP and HP Filter](https://www.musicdsp.org/en/latest/Filters/38-lp-and-hp-filter.html)
+/// Frequency in Hz
+/// Resonance is sqrt(2) (1.4142) to 0.1 low to high
 pub struct Vcf<T: GenSource> {
     source: T,
     frequency: f32,
