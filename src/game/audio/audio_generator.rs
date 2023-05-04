@@ -137,7 +137,8 @@ where
             if let Some(voltage) = cv.next() {
                 if voltage != self.last_cv {
                     self.last_cv = voltage;
-                    let frequency = frequency_per_volt(voltage + self.base_voltage);
+                    let frequency =
+                        frequency_per_volt((voltage + self.base_voltage).clamp(-1., 1.));
                     self.oscillator.set_frequency(frequency);
                 }
             }
