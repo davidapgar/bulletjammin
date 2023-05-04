@@ -1,6 +1,15 @@
 use super::world::WorldPosition;
 use bevy::prelude::*;
 
+// !!!!!!!!!
+// Implement collisions
+// health for player
+// player stats on top of screen
+// Tracker based sound generation, tied to bullet spawning
+// Make it good
+// Enemies? Or just run around?
+// !!!!!!!!!
+
 #[derive(Component)]
 pub struct Player;
 
