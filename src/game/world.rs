@@ -188,14 +188,12 @@ fn spawn_system(
                 Vco::new(
                     SquareWave::new(frequency),
                     frequency,
-                    Some(Attenuator::new(RampWave::new(30.).as_raw(), 0.02).as_raw()),
-                )
-                .as_raw(),
+                    Attenuator::new(RampWave::new(30.), 0.02),
+                ),
                 frequency,
                 0.5,
-            )
-            .as_raw(),
-            Envelope::new(0.3, 0.05, 0.05, 0.2).as_raw(),
+            ),
+            Envelope::new(0.3, 0.05, 0.05, 0.2),
         );
         audio.play(vca.as_raw());
 

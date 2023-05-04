@@ -25,14 +25,10 @@ fn audio_startup(audio_output: ResMut<AudioOutput>) {
             //SawWave::new(440.),
             SuperSaw::new(440.),
             220.,
-            //Some(Attenuator::new(SawWave::new(10.).as_raw(), 0.1).as_raw()),
-            None,
+            Attenuator::new(SawWave::new(10.), 0.1),
         );
-        let vca = Vca::new(
-            as_raw_source(vco),
-            as_raw_source(Envelope::new(0.2, 0.1, 0.2, 1.0)),
-        );
-        stream_handle.play_raw(as_raw_source(vca)).unwrap();
+        let vca = Vca::new(vco, Envelope::new(0.2, 0.1, 0.2, 1.0));
+        stream_handle.play_raw(vca.as_raw()).unwrap();
     }
 }
 

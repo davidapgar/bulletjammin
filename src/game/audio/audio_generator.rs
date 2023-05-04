@@ -1,16 +1,21 @@
 use rodio::source::Source;
 use std::time::Duration;
 
+/// Single channel audio generator
+pub trait GenSource: Iterator<Item = f32> + Send + Sync + 'static {}
+
 /// Type-erased wrapper around a source.
 /// Has 1 channel, sample_rate of 44100
 pub struct RawSource {
-    source: Box<dyn Iterator<Item = f32> + Send + Sync>,
+    source: Box<dyn GenSource>,
 }
+
+impl GenSource for RawSource {}
 
 impl RawSource {
     pub fn new<T>(source: T) -> RawSource
     where
-        T: Iterator<Item = f32> + Send + Sync + 'static,
+        T: GenSource,
     {
         RawSource {
             source: Box::new(source),
@@ -46,14 +51,14 @@ impl Iterator for RawSource {
 
 pub fn as_raw_source<T>(source: T) -> RawSource
 where
-    T: Iterator<Item = f32> + Send + Sync + 'static,
+    T: GenSource,
 {
     RawSource::new(source)
 }
 
 const SAMPLE_RATE: f32 = 44100.0;
 
-pub trait Oscillator {
+pub trait Oscillator: GenSource {
     fn set_frequency(&mut self, frequency: f32);
 }
 
@@ -71,18 +76,30 @@ pub fn volts_per_frequency(frequency: f32) -> f32 {
     (frequency / C2).log2() / 10.0
 }
 
-pub struct Vco<T: Oscillator + Iterator<Item = f32>> {
+pub struct Vco<T: Oscillator, CV: GenSource> {
     oscillator: T,
     base_voltage: f32,
-    cv: Option<RawSource>,
+    cv: Option<CV>,
     last_cv: f32,
 }
 
-impl<T> Vco<T>
+impl<T, CV> GenSource for Vco<T, CV>
 where
-    T: Oscillator + Iterator<Item = f32> + Send + Sync + 'static,
+    T: Oscillator,
+    CV: GenSource,
 {
-    pub fn new(mut oscillator: T, base_frequency: f32, cv: Option<RawSource>) -> Self {
+}
+
+impl<T, CV> Vco<T, CV>
+where
+    T: Oscillator,
+    CV: GenSource,
+{
+    pub fn new(oscillator: T, base_frequency: f32, cv: CV) -> Self {
+        Self::new_internal(oscillator, base_frequency, Some(cv))
+    }
+
+    fn new_internal(mut oscillator: T, base_frequency: f32, cv: Option<CV>) -> Self {
         oscillator.set_frequency(base_frequency);
         let base_voltage = volts_per_frequency(base_frequency);
 
@@ -99,9 +116,19 @@ where
     }
 }
 
-impl<T> Iterator for Vco<T>
+impl<T> Vco<T, RawSource>
 where
-    T: Oscillator + Iterator<Item = f32>,
+    T: Oscillator,
+{
+    pub fn from_oscillator(oscillator: T, base_frequency: f32) -> Self {
+        Vco::new_internal(oscillator, base_frequency, None)
+    }
+}
+
+impl<T, CV> Iterator for Vco<T, CV>
+where
+    T: Oscillator,
+    CV: GenSource,
 {
     type Item = f32;
 
@@ -124,6 +151,8 @@ pub struct SquareWave {
     frequency: f32,
     period: f32,
 }
+
+impl GenSource for SquareWave {}
 
 impl Oscillator for SquareWave {
     fn set_frequency(&mut self, frequency: f32) {
@@ -186,6 +215,8 @@ pub struct SawWave {
     period: f32,
 }
 
+impl GenSource for SawWave {}
+
 impl SawWave {
     pub fn new(frequency: f32) -> Self {
         Self {
@@ -226,6 +257,8 @@ pub struct RampWave {
     period: f32,
 }
 
+impl GenSource for RampWave {}
+
 impl RampWave {
     pub fn new(frequency: f32) -> Self {
         Self {
@@ -265,6 +298,8 @@ pub struct SuperSaw {
     sub_oscillators: Vec<SawWave>,
 }
 
+impl GenSource for SuperSaw {}
+
 impl SuperSaw {
     pub fn new(frequency: f32) -> Self {
         let mut sub_oscillators = Vec::<SawWave>::new();
@@ -302,8 +337,8 @@ impl Iterator for SuperSaw {
 }
 
 ///! From [LP and HP Filter](https://www.musicdsp.org/en/latest/Filters/38-lp-and-hp-filter.html)
-pub struct Vcf {
-    source: RawSource,
+pub struct Vcf<T: GenSource> {
+    source: T,
     frequency: f32,
     resonance: f32,
 
@@ -313,8 +348,13 @@ pub struct Vcf {
     c: f32,
 }
 
-impl Vcf {
-    pub fn new(source: RawSource, frequency: f32, resonance: f32) -> Self {
+impl<T> GenSource for Vcf<T> where T: GenSource {}
+
+impl<T> Vcf<T>
+where
+    T: GenSource,
+{
+    pub fn new(source: T, frequency: f32, resonance: f32) -> Self {
         let mut vcf = Self {
             source,
             frequency,
@@ -333,14 +373,20 @@ impl Vcf {
     }
 }
 
-impl Oscillator for Vcf {
+impl<T> Oscillator for Vcf<T>
+where
+    T: GenSource,
+{
     fn set_frequency(&mut self, frequency: f32) {
         self.frequency = frequency;
         self.c = 1.0 / (std::f32::consts::PI * frequency / SAMPLE_RATE as f32).tan();
     }
 }
 
-impl Iterator for Vcf {
+impl<T> Iterator for Vcf<T>
+where
+    T: GenSource,
+{
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -372,13 +418,24 @@ impl Iterator for Vcf {
     }
 }
 
-pub struct Vca {
-    source: RawSource,
-    envelope: RawSource,
+pub struct Vca<S: GenSource, E: GenSource> {
+    source: S,
+    envelope: E,
 }
 
-impl Vca {
-    pub fn new(source: RawSource, envelope: RawSource) -> Self {
+impl<S, E> GenSource for Vca<S, E>
+where
+    S: GenSource,
+    E: GenSource,
+{
+}
+
+impl<S, E> Vca<S, E>
+where
+    S: GenSource,
+    E: GenSource,
+{
+    pub fn new(source: S, envelope: E) -> Self {
         Vca { source, envelope }
     }
 
@@ -387,7 +444,11 @@ impl Vca {
     }
 }
 
-impl Iterator for Vca {
+impl<S, E> Iterator for Vca<S, E>
+where
+    S: GenSource,
+    E: GenSource,
+{
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -415,6 +476,8 @@ pub struct Envelope {
     /// Time that has elapsed.
     time: f32,
 }
+
+impl GenSource for Envelope {}
 
 impl Envelope {
     pub fn new(amplitude: f32, attack: f32, hold: f32, release: f32) -> Self {
@@ -455,13 +518,18 @@ impl Iterator for Envelope {
     }
 }
 
-pub struct Attenuator {
-    source: RawSource,
+pub struct Attenuator<T: GenSource> {
+    source: T,
     attenuation: f32,
 }
 
-impl Attenuator {
-    pub fn new(source: RawSource, attenuation: f32) -> Self {
+impl<T> GenSource for Attenuator<T> where T: GenSource {}
+
+impl<T> Attenuator<T>
+where
+    T: GenSource,
+{
+    pub fn new(source: T, attenuation: f32) -> Self {
         Attenuator {
             source,
             attenuation: attenuation.clamp(-1.0, 1.0),
@@ -473,7 +541,10 @@ impl Attenuator {
     }
 }
 
-impl Iterator for Attenuator {
+impl<T> Iterator for Attenuator<T>
+where
+    T: GenSource,
+{
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
