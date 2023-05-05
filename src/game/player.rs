@@ -4,11 +4,13 @@ use bevy::sprite::collide_aabb::{collide, Collision};
 
 // !!!!!!!!!
 // ~Implement collisions
-// health for player
-// player stats on top of screen
-// Tracker based sound generation, tied to bullet spawning
+// ~health for player
+// ~player stats on top of screen
+// ~Tracker based sound generation, tied to bullet spawning
+//  partial, it's a bit tightly coupled.
 // Make it good
 // Enemies? Or just run around?
+// Animations
 // !!!!!!!!!
 
 #[derive(Component)]

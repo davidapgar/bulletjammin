@@ -1,8 +1,10 @@
+use animation::AnimationPlugin;
 use audio::audio_generator::*;
 use audio::audio_output::AudioOutput;
 use audio::Audio;
 use bevy::prelude::*;
 
+pub mod animation;
 pub mod audio;
 pub mod player;
 pub mod song;
@@ -15,7 +17,8 @@ impl bevy::app::Plugin for Plugin {
         app.insert_resource(AudioOutput::default())
             .insert_resource(Audio::default())
             .add_system(button_system);
-        app.add_plugin(audio::AudioPlugin)
+        app.add_plugin(animation::AnimationPlugin)
+            .add_plugin(audio::AudioPlugin)
             .add_plugin(world::WorldPlugin)
             .add_plugin(player::PlayerPlugin);
     }

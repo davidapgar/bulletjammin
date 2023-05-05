@@ -1,3 +1,4 @@
+use super::animation::{Animation, AnimationFrame};
 use super::audio::audio_generator::*;
 use super::audio::Audio;
 use super::player::Player;
@@ -119,6 +120,10 @@ fn world_startup(
         },
         Player::default(),
         WorldPosition::new(Vec2::new(5. * 16., 5. * 16.), 1.),
+        Animation::new(
+            vec![AnimationFrame::new(0, 0.125), AnimationFrame::new(1, 0.025)],
+            true,
+        ),
     ));
 
     spawn_world_grid(&mut commands, floor_handle, wall_handle);
