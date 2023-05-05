@@ -1,9 +1,11 @@
-use super::animation::{Animation, AnimationFrame};
+use super::animation::{Animation, AnimationFrame, AnimationSet};
 use super::audio::audio_generator::*;
 use super::audio::Audio;
+use super::enemy::Enemy;
 use super::player::Player;
 use super::song::{mary_song, Song};
 use bevy::prelude::*;
+use std::collections::HashMap;
 
 pub struct WorldPlugin;
 
@@ -89,28 +91,51 @@ fn world_startup(
 ) {
     commands.spawn(Camera2dBundle::default());
 
-    let (player_sprite, floor_sprite, wall_sprite, blast_sprite) = (
+    let (player_sprite, floor_sprite, wall_sprite, blast_sprite, enemy_sprite) = (
         asset_server.load("sprites/player.png"),
         asset_server.load("sprites/floor.png"),
         asset_server.load("sprites/wall.png"),
         asset_server.load("sprites/blast.png"),
+        asset_server.load("sprites/sheep.png"),
     );
 
-    let (player_atlas, floor_atlas, wall_atlas, blast_atlas) = (
+    let (player_atlas, floor_atlas, wall_atlas, blast_atlas, enemy_atlas) = (
         TextureAtlas::from_grid(player_sprite, Vec2::new(16.0, 16.0), 8, 1, None, None),
         TextureAtlas::from_grid(floor_sprite, Vec2::new(16.0, 16.0), 1, 1, None, None),
         TextureAtlas::from_grid(wall_sprite, Vec2::new(16.0, 16.0), 1, 1, None, None),
         TextureAtlas::from_grid(blast_sprite, Vec2::new(8.0, 8.0), 2, 1, None, None),
+        TextureAtlas::from_grid(enemy_sprite, Vec2::new(16.0, 16.0), 3, 1, None, None),
     );
 
-    let (player_handle, floor_handle, wall_handle, blast_handle) = (
+    let (player_handle, floor_handle, wall_handle, blast_handle, enemy_handle) = (
         texture_atlases.add(player_atlas),
         texture_atlases.add(floor_atlas),
         texture_atlases.add(wall_atlas),
         texture_atlases.add(blast_atlas),
+        texture_atlases.add(enemy_atlas),
     );
 
     sprites.blast = blast_handle.clone();
+
+    let animation_set = HashMap::from([
+        (
+            "Down",
+            Animation::new(vec![AnimationFrame::new(0, 0.125)], true),
+        ),
+        (
+            "Up",
+            Animation::new(vec![AnimationFrame::new(2, 0.125)], true),
+        ),
+        (
+            "Right",
+            Animation::new(vec![AnimationFrame::new(4, 0.125)], true),
+        ),
+        (
+            "Left",
+            Animation::new(vec![AnimationFrame::new(6, 0.125)], true),
+        ),
+    ]);
+    let player_animations = AnimationSet::new(animation_set);
 
     commands.spawn((
         SpriteSheetBundle {
@@ -124,6 +149,24 @@ fn world_startup(
             vec![AnimationFrame::new(0, 0.125), AnimationFrame::new(1, 0.025)],
             true,
         ),
+        player_animations,
+    ));
+
+    let enemy_frames = vec![
+        AnimationFrame::new(0, 0.250),
+        AnimationFrame::new(1, 0.250),
+        AnimationFrame::new(0, 0.250),
+        AnimationFrame::new(2, 0.250),
+    ];
+    commands.spawn((
+        SpriteSheetBundle {
+            texture_atlas: enemy_handle,
+            sprite: TextureAtlasSprite::new(0),
+            ..default()
+        },
+        Enemy,
+        WorldPosition::new(Vec2::new(8. * 16., 8. * 16.), 1.),
+        Animation::new(enemy_frames, true),
     ));
 
     spawn_world_grid(&mut commands, floor_handle, wall_handle);
@@ -200,6 +243,10 @@ fn spawn_system(
                 Bullet(BulletType::Enemy),
                 Moveable(Vec2::new(4., 0.)),
                 WorldPosition::new(Vec2::new(0., 16. * note as f32), 1.),
+                Animation::new(
+                    vec![AnimationFrame::new(0, 0.250), AnimationFrame::new(1, 0.250)],
+                    true,
+                ),
             ));
             audio.play(source);
         }

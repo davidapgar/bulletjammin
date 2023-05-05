@@ -66,10 +66,14 @@ impl Animation {
 
 #[derive(Component)]
 pub struct AnimationSet {
-    set: HashMap<String, Animation>,
+    set: HashMap<&'static str, Animation>,
 }
 
 impl AnimationSet {
+    pub fn new(set: HashMap<&'static str, Animation>) -> Self {
+        Self { set }
+    }
+
     fn get(&self, key: &str) -> Option<&Animation> {
         self.set.get(key)
     }

@@ -6,6 +6,7 @@ use bevy::prelude::*;
 
 pub mod animation;
 pub mod audio;
+pub mod enemy;
 pub mod player;
 pub mod song;
 pub mod world;
@@ -19,8 +20,9 @@ impl bevy::app::Plugin for Plugin {
             .add_system(button_system);
         app.add_plugin(animation::AnimationPlugin)
             .add_plugin(audio::AudioPlugin)
-            .add_plugin(world::WorldPlugin)
-            .add_plugin(player::PlayerPlugin);
+            .add_plugin(enemy::EnemyPlugin)
+            .add_plugin(player::PlayerPlugin)
+            .add_plugin(world::WorldPlugin);
     }
 }
 
