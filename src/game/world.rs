@@ -164,7 +164,7 @@ fn world_startup(
             sprite: TextureAtlasSprite::new(0),
             ..default()
         },
-        Enemy,
+        Enemy::default(),
         WorldPosition::new(Vec2::new(8. * 16., 8. * 16.), 1.),
         Animation::new(enemy_frames, true),
     ));
