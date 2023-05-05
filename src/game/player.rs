@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
 
 // !!!!!!!!!
-// Implement collisions
+// ~Implement collisions
 // health for player
 // player stats on top of screen
 // Tracker based sound generation, tied to bullet spawning
@@ -56,7 +56,6 @@ fn player_input_system(
         ) {
             // TODO FIXME: When colliding with top/bottom tiles, sometimes they return right/left (at
             // corners). This stops movement. Ideally do something better.
-            println!("Collide {:?}", collision);
             match collision {
                 Collision::Left | Collision::Right => player.position.x -= movement.x,
                 Collision::Bottom | Collision::Top => player.position.y -= movement.y,

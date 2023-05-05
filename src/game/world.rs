@@ -21,17 +21,41 @@ struct Sprites {
     blast: Handle<TextureAtlas>,
 }
 
+struct Phrase {
+    notes: [i32; 16],
+}
+
+impl Phrase {
+    fn note(&self, idx: i32) -> Option<i32> {
+        if idx < 0 || idx as usize >= self.notes.len() {
+            None
+        } else {
+            let note = self.notes[idx as usize];
+            if note >= 0 {
+                Some(note)
+            } else {
+                None
+            }
+        }
+    }
+}
+
 #[derive(Resource)]
 struct Song {
     timer: Timer,
     idx: i32,
+    phrase: Phrase,
 }
 
 impl Default for Song {
     fn default() -> Self {
+        let phrase = Phrase {
+            notes: [2, 1, 0, 1, 2, 2, 2, -1, 1, 1, 1, -1, 0, 4, 4, -1],
+        };
         Self {
             timer: Timer::from_seconds(0.5, TimerMode::Once),
             idx: 0,
+            phrase,
         }
     }
 }
@@ -182,46 +206,35 @@ fn spawn_system(
     song.timer.tick(time.delta());
 
     if song.timer.just_finished() {
-        commands.spawn((
-            SpriteSheetBundle {
-                texture_atlas: sprites.blast.clone(),
-                transform: Transform::from_translation(Vec3::new(0., 0., -1.)),
-                ..default()
-            },
-            Bullet(BulletType::Enemy),
-            Moveable(Vec2::new(4., 0.)),
-            WorldPosition::new(Vec2::new(0., 16. * song.idx as f32), 1.),
-        ));
-
-        let note = match song.idx {
-            0 => 0,
-            1 => 2,
-            2 => 4,
-            3 => 5,
-            4 => 7,
-            5 => 5,
-            6 => 4,
-            7 => 2,
-            8 => 0,
-            _ => 0,
-        };
-        let frequency = frequency_per_volt(note as f32 / 120.0 + 0.2);
-        let vca = Vca::new(
-            Vcf::new(
-                Vco::new(
-                    SquareWave::new(frequency),
+        if let Some(note) = song.phrase.note(song.idx) {
+            commands.spawn((
+                SpriteSheetBundle {
+                    texture_atlas: sprites.blast.clone(),
+                    transform: Transform::from_translation(Vec3::new(0., 0., -1.)),
+                    ..default()
+                },
+                Bullet(BulletType::Enemy),
+                Moveable(Vec2::new(4., 0.)),
+                WorldPosition::new(Vec2::new(0., 16. * note as f32), 1.),
+            ));
+            let frequency = frequency_per_volt(note as f32 / 120.0 + 0.2);
+            let vca = Vca::new(
+                Vcf::new(
+                    Vco::new(
+                        SquareWave::new(frequency),
+                        frequency,
+                        Attenuator::new(RampWave::new(30.), 0.02),
+                    ),
                     frequency,
-                    Attenuator::new(RampWave::new(30.), 0.02),
+                    0.5,
                 ),
-                frequency,
-                0.5,
-            ),
-            Envelope::new(0.3, 0.05, 0.05, 0.2),
-        );
-        audio.play(vca.as_raw());
+                Envelope::new(0.3, 0.05, 0.05, 0.2),
+            );
+            audio.play(vca.as_raw());
+        }
 
         song.idx += 1;
-        if song.idx >= 8 {
+        if song.idx >= 16 {
             song.idx = 0;
         }
 
