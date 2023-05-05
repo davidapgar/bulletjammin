@@ -1,6 +1,7 @@
 use super::audio::audio_generator::*;
 use super::audio::Audio;
 use super::player::Player;
+use super::song::{mary_song, Song};
 use bevy::prelude::*;
 
 pub struct WorldPlugin;
@@ -8,7 +9,8 @@ pub struct WorldPlugin;
 impl bevy::app::Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Sprites::default())
-            .insert_resource(Song::default())
+            .insert_resource(mary_song())
+            .insert_resource(SongTimer::default())
             .add_startup_system(world_startup)
             .add_system(spawn_system)
             .add_system(move_system)
@@ -16,48 +18,24 @@ impl bevy::app::Plugin for WorldPlugin {
     }
 }
 
+#[derive(Resource)]
+struct SongTimer {
+    timer: Timer,
+    idx: usize,
+}
+
+impl Default for SongTimer {
+    fn default() -> Self {
+        SongTimer {
+            timer: Timer::from_seconds(0.125, TimerMode::Once),
+            idx: 0,
+        }
+    }
+}
+
 #[derive(Resource, Default)]
 struct Sprites {
     blast: Handle<TextureAtlas>,
-}
-
-struct Phrase {
-    notes: [i32; 16],
-}
-
-impl Phrase {
-    fn note(&self, idx: i32) -> Option<i32> {
-        if idx < 0 || idx as usize >= self.notes.len() {
-            None
-        } else {
-            let note = self.notes[idx as usize];
-            if note >= 0 {
-                Some(note)
-            } else {
-                None
-            }
-        }
-    }
-}
-
-#[derive(Resource)]
-struct Song {
-    timer: Timer,
-    idx: i32,
-    phrase: Phrase,
-}
-
-impl Default for Song {
-    fn default() -> Self {
-        let phrase = Phrase {
-            notes: [2, 1, 0, 1, 2, 2, 2, -1, 1, 1, 1, -1, 0, 4, 4, -1],
-        };
-        Self {
-            timer: Timer::from_seconds(0.5, TimerMode::Once),
-            idx: 0,
-            phrase,
-        }
-    }
 }
 
 #[derive(Component)]
@@ -199,14 +177,15 @@ fn spawn_world_grid(
 fn spawn_system(
     mut commands: Commands,
     sprites: Res<Sprites>,
-    mut song: ResMut<Song>,
+    mut song_timer: ResMut<SongTimer>,
+    song: Res<Song>,
     time: Res<Time>,
     audio: Res<Audio>,
 ) {
-    song.timer.tick(time.delta());
+    song_timer.timer.tick(time.delta());
 
-    if song.timer.just_finished() {
-        if let Some(note) = song.phrase.note(song.idx) {
+    if song_timer.timer.just_finished() {
+        if let Some((note, source)) = song.note(song_timer.idx) {
             commands.spawn((
                 SpriteSheetBundle {
                     texture_atlas: sprites.blast.clone(),
@@ -217,28 +196,15 @@ fn spawn_system(
                 Moveable(Vec2::new(4., 0.)),
                 WorldPosition::new(Vec2::new(0., 16. * note as f32), 1.),
             ));
-            let frequency = frequency_per_volt(note as f32 / 120.0 + 0.2);
-            let vca = Vca::new(
-                Vcf::new(
-                    Vco::new(
-                        SquareWave::new(frequency),
-                        frequency,
-                        Attenuator::new(RampWave::new(30.), 0.02),
-                    ),
-                    frequency,
-                    0.5,
-                ),
-                Envelope::new(0.3, 0.05, 0.05, 0.2),
-            );
-            audio.play(vca.as_raw());
+            audio.play(source);
         }
 
-        song.idx += 1;
-        if song.idx >= 16 {
-            song.idx = 0;
+        song_timer.idx += 1;
+        if song_timer.idx >= song.len() {
+            song_timer.idx = 0;
         }
 
-        song.timer = Timer::from_seconds(0.25, TimerMode::Once);
+        song_timer.timer = Timer::from_seconds(0.25, TimerMode::Once);
     }
 }
 

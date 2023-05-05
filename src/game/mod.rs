@@ -5,6 +5,7 @@ use bevy::prelude::*;
 
 pub mod audio;
 pub mod player;
+pub mod song;
 pub mod world;
 
 pub struct Plugin;
