@@ -139,7 +139,7 @@ fn world_startup(
             sprite: TextureAtlasSprite::new(0),
             ..default()
         },
-        Player,
+        Player::default(),
         WorldPosition::new(Vec2::new(5. * 16., 5. * 16.), 1.),
     ));
 
@@ -151,7 +151,7 @@ fn spawn_world_grid(
     floor_handle: Handle<TextureAtlas>,
     wall_handle: Handle<TextureAtlas>,
 ) {
-    let (w, h) = (25, 18);
+    let (w, h) = (25, 17);
 
     commands.spawn(World {
         size: Vec2::new(w as f32, h as f32),

@@ -12,14 +12,49 @@ use bevy::sprite::collide_aabb::{collide, Collision};
 // !!!!!!!!!
 
 #[derive(Component)]
-pub struct Player;
+pub struct Player {
+    health: i32,
+}
+
+impl Default for Player {
+    fn default() -> Self {
+        Player { health: 8 }
+    }
+}
 
 pub struct PlayerPlugin;
 
 impl bevy::app::Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(player_input_system)
-            .add_system(player_bullet_system);
+        app.add_startup_system(health_ui_startup_system)
+            .add_system(player_input_system)
+            .add_system(player_bullet_system)
+            .add_system(update_health_system);
+    }
+}
+
+#[derive(Component)]
+struct HeartUi(bool, i32);
+
+fn health_ui_startup_system(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
+    let heart_sprite = asset_server.load("sprites/heart.png");
+    let heart_atlas = TextureAtlas::from_grid(heart_sprite, Vec2::new(8., 8.), 2, 1, None, None);
+    let heart_handle = texture_atlases.add(heart_atlas);
+
+    for i in 0..8 {
+        let translation = Vec3::new(-400. + 8. + (i as f32 * 16.), 300. - 8., 900.);
+        commands.spawn((
+            SpriteSheetBundle {
+                texture_atlas: heart_handle.clone(),
+                transform: Transform::from_translation(translation).with_scale(Vec3::splat(2.0)),
+                ..default()
+            },
+            HeartUi(true, i),
+        ));
     }
 }
 
@@ -67,12 +102,12 @@ fn player_input_system(
 
 fn player_bullet_system(
     mut commands: Commands,
-    player_query: Query<&WorldPosition, (With<Player>, Without<Bullet>)>,
+    mut player_query: Query<(&WorldPosition, &mut Player), Without<Bullet>>,
     bullet_query: Query<(Entity, &WorldPosition, &Bullet), (With<Bullet>, Without<Player>)>,
 ) {
     let bullet_size = Vec2::new(8., 8.);
-    for player in &player_query {
-        let player_pos = player.position.extend(0.);
+    for (player_position, mut player) in &mut player_query {
+        let player_pos = player_position.position.extend(0.);
         let player_size = Vec2::new(16., 16.);
 
         let filtered = bullet_query.iter().filter_map(|(entity, pos, bullet)| {
@@ -89,8 +124,24 @@ fn player_bullet_system(
                 bullet.position.extend(0.),
                 bullet_size,
             ) {
+                player.health -= 1;
                 commands.entity(entity).despawn();
             }
+        }
+    }
+}
+
+fn update_health_system(
+    player_query: Query<&Player>,
+    mut health_query: Query<(&HeartUi, &mut TextureAtlasSprite)>,
+) {
+    let player = player_query.single();
+
+    for (heart_ui, mut sprite) in &mut health_query {
+        if heart_ui.1 >= player.health {
+            sprite.index = 1;
+        } else {
+            sprite.index = 0;
         }
     }
 }
