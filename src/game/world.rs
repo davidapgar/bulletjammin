@@ -117,6 +117,23 @@ fn world_startup(
         Animation::new(enemy_frames, true),
     ));
 
+    let boss_frames = vec![
+        AnimationFrame::new(0, 0.250),
+        AnimationFrame::new(1, 0.150),
+        AnimationFrame::new(0, 0.250),
+        AnimationFrame::new(2, 0.150),
+    ];
+    commands.spawn((
+        SpriteSheetBundle {
+            texture_atlas: sprites.ram.clone(),
+            sprite: TextureAtlasSprite::new(0),
+            ..default()
+        },
+        Enemy::default(),
+        WorldPosition::new(Vec2::new(12. * 16., 12. * 16.), 1.),
+        Animation::new(boss_frames, true),
+    ));
+
     spawn_world_grid(&mut commands, sprites.floor.clone(), sprites.wall.clone());
 }
 

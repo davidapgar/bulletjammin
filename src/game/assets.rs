@@ -17,6 +17,7 @@ pub struct Sprites {
     pub wall: Handle<TextureAtlas>,
     pub cannon: Handle<TextureAtlas>,
     pub sheep: Handle<TextureAtlas>,
+    pub ram: Handle<TextureAtlas>,
     pub blast: Handle<TextureAtlas>,
     pub shot: Handle<TextureAtlas>,
 }
@@ -54,6 +55,14 @@ fn load_assets(
         asset_server.load("sprites/sheep.png"),
         Vec2::new(16.0, 16.0),
         3,
+        1,
+        None,
+        None,
+    ));
+    sprites.ram = texture_atlases.add(TextureAtlas::from_grid(
+        asset_server.load("sprites/ram.png"),
+        Vec2::new(128.0, 128.0),
+        4,
         1,
         None,
         None,
