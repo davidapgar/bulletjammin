@@ -1,5 +1,6 @@
 use super::player::Player;
 use super::world::{Bullet, BulletType, Wall, WorldPosition};
+use super::GameState;
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
 use rand::prelude::*;
@@ -8,8 +9,9 @@ pub struct EnemyPlugin;
 
 impl bevy::app::Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(enemy_movement_system)
-            .add_system(enemy_bullet_system);
+        app.add_systems(
+            (enemy_movement_system, enemy_bullet_system).in_set(OnUpdate(GameState::Playing)),
+        );
     }
 }
 

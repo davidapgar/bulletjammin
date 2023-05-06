@@ -1,11 +1,10 @@
 use super::animation::{Animated, Animation, AnimationFrame};
-use super::audio::audio_generator::*;
 use super::audio::Audio;
 use super::enemy::Enemy;
 use super::player::{Player, PlayerAnimations};
 use super::song::{mary_song, Song};
+use super::GameState;
 use bevy::prelude::*;
-use std::collections::HashMap;
 
 pub struct WorldPlugin;
 
@@ -14,10 +13,15 @@ impl bevy::app::Plugin for WorldPlugin {
         app.insert_resource(Sprites::default())
             .insert_resource(mary_song())
             .insert_resource(SongTimer::default())
-            .add_startup_system(world_startup)
-            .add_system(spawn_system)
-            .add_system(move_system)
-            .add_system(transform_world_system.after(spawn_system));
+            .add_system(world_startup.in_schedule(OnEnter(GameState::Playing)))
+            .add_systems(
+                (
+                    spawn_system,
+                    move_system,
+                    transform_world_system.after(spawn_system),
+                )
+                    .in_set(OnUpdate(GameState::Playing)),
+            );
     }
 }
 
@@ -90,8 +94,6 @@ fn world_startup(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut sprites: ResMut<Sprites>,
 ) {
-    commands.spawn(Camera2dBundle::default());
-
     let (player_sprite, floor_sprite, wall_sprite, blast_sprite, enemy_sprite, shot_sprite) = (
         asset_server.load("sprites/player.png"),
         asset_server.load("sprites/floor.png"),

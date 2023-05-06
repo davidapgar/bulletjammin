@@ -1,5 +1,6 @@
 use super::animation::{Animated, Animation, AnimationFrame, AnimationMarker};
 use super::world::{Bullet, BulletType, Moveable, Sprites, Wall, WorldPosition};
+use super::GameState;
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
 
@@ -19,12 +20,17 @@ pub struct PlayerPlugin;
 
 impl bevy::app::Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(health_ui_startup_system)
-            .add_system(player_input_system)
-            .add_system(player_bullet_system)
-            .add_system(player_shooting_system)
-            .add_system(player_animation_system)
-            .add_system(update_health_system);
+        app.add_system(health_ui_startup_system.in_schedule(OnEnter(GameState::Playing)))
+            .add_systems(
+                (
+                    player_input_system,
+                    player_bullet_system,
+                    player_shooting_system,
+                    player_animation_system,
+                    update_health_system,
+                )
+                    .in_set(OnUpdate(GameState::Playing)),
+            );
     }
 }
 

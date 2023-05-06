@@ -7,23 +7,38 @@ use bevy::prelude::*;
 pub mod animation;
 pub mod audio;
 pub mod enemy;
+pub mod menu;
 pub mod player;
 pub mod song;
 pub mod world;
 
 pub struct Plugin;
 
+#[derive(States, Default, Clone, Eq, PartialEq, Debug, Hash)]
+pub enum GameState {
+    #[default]
+    Menu,
+    Playing,
+}
+
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(AudioOutput::default())
+        app.add_state::<GameState>()
+            .insert_resource(AudioOutput::default())
             .insert_resource(Audio::default())
+            .add_startup_system(spawn_camera)
             .add_system(button_system);
-        app.add_plugin(animation::AnimationPlugin)
+        app.add_plugin(menu::MenuPlugin)
+            .add_plugin(animation::AnimationPlugin)
             .add_plugin(audio::AudioPlugin)
             .add_plugin(enemy::EnemyPlugin)
             .add_plugin(player::PlayerPlugin)
             .add_plugin(world::WorldPlugin);
     }
+}
+
+fn spawn_camera(mut commands: Commands) {
+    commands.spawn(Camera2dBundle::default());
 }
 
 fn button_system(keyboard_input: Res<Input<KeyCode>>, audio: ResMut<Audio>) {
