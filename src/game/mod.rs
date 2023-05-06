@@ -7,6 +7,7 @@ use bevy::prelude::*;
 pub mod animation;
 pub mod assets;
 pub mod audio;
+pub mod cannon;
 pub mod enemy;
 pub mod menu;
 pub mod player;
@@ -72,15 +73,27 @@ fn button_system(keyboard_input: Res<Input<KeyCode>>, audio: ResMut<Audio>) {
 
     for key in keys {
         let frequency = frequency_per_volt(key as f32 / 120.0 + 0.2);
+        /*
         let vca = Vca::new(
             Vco::new(
-                Vcf::new(SquareWave::new(frequency), frequency, 1.41),
+                //Vcf::new(SquareWave::new(frequency), frequency, 1.41),
                 //Vcf::new(SquareWave::new(frequency), frequency, 0.1),
+                Vcf::new(TriangleWave::new(frequency), frequency, 1.41),
                 frequency / 2.,
                 Envelope::new(0.6, 0.2, 0.05, 0.2),
             ),
             Envelope::new(0.3, 0.1, 0.05, 0.2),
         );
+        audio.play(vca.as_raw());
+        */
+        //let osc = Attenuator::new(TriangleWave::new(frequency), 2.0);
+        let frequency = frequency_per_volt(key as f32 / 120.0 + 0.0);
+
+        let kick_env = Envelope::new(2.0, 0.001, 0.1, 0.3);
+        let freq_env = Envelope::new(0.02, 0.0, 0.0, 0.2);
+        let vco = Vco::new(TriangleWave::new(frequency), frequency, freq_env);
+        let osc = Attenuator::new(vco, 2.0);
+        let vca = Vca::new(osc, kick_env);
         audio.play(vca.as_raw());
     }
 }

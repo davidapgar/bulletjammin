@@ -295,6 +295,58 @@ impl Iterator for RampWave {
     }
 }
 
+pub struct TriangleWave {
+    frequency: f32,
+    period: f32,
+}
+
+impl GenSource for TriangleWave {}
+
+impl TriangleWave {
+    pub fn new(frequency: f32) -> Self {
+        Self {
+            frequency,
+            period: 0.,
+        }
+    }
+
+    pub fn as_raw(self) -> RawSource {
+        RawSource::new(self)
+    }
+}
+
+impl Oscillator for TriangleWave {
+    fn set_frequency(&mut self, frequency: f32) {
+        self.frequency = frequency;
+    }
+}
+
+impl Iterator for TriangleWave {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let p_step = self.frequency / SAMPLE_RATE;
+
+        self.period += p_step;
+        if self.period > 1.0 {
+            self.period -= 1.0;
+        }
+
+        // low to high to low
+        // 0..0.5 is -0.5..0.5, 0.5..1 is 0.5..-0.5
+        if self.period < 0.5 {
+            // Scale to -0.5..0.5 (0..1 - 0.5)
+            let sample = self.period * 2. - 0.5;
+            Some(sample)
+        } else {
+            // >= 0.5..1.0
+            // Scale to -0.5..0.5, invert
+            let sample = (self.period - 0.5) * 2. - 0.5;
+            Some(sample * -1.)
+        }
+    }
+}
+
 pub struct SuperSaw {
     sub_oscillators: Vec<SawWave>,
 }
@@ -535,7 +587,7 @@ where
     pub fn new(source: T, attenuation: f32) -> Self {
         Attenuator {
             source,
-            attenuation: attenuation.clamp(-1.0, 1.0),
+            attenuation: attenuation.clamp(-1.0, 2.0),
         }
     }
 
