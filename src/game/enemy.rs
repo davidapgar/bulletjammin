@@ -1,4 +1,5 @@
-use super::world::{Wall, WorldPosition};
+use super::player::Player;
+use super::world::{Bullet, BulletType, Wall, WorldPosition};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
 use rand::prelude::*;
@@ -7,7 +8,8 @@ pub struct EnemyPlugin;
 
 impl bevy::app::Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(enemy_movement_system);
+        app.add_system(enemy_movement_system)
+            .add_system(enemy_bullet_system);
     }
 }
 
@@ -15,6 +17,7 @@ impl bevy::app::Plugin for EnemyPlugin {
 pub struct Enemy {
     heading: Vec2,
     timer: Timer,
+    health: i32,
 }
 
 impl Default for Enemy {
@@ -22,6 +25,7 @@ impl Default for Enemy {
         Self {
             heading: Vec2::default(),
             timer: Timer::new(bevy::utils::Duration::from_nanos(1), TimerMode::Once),
+            health: 8,
         }
     }
 }
@@ -61,6 +65,40 @@ fn enemy_movement_system(
                     Collision::Inside => e_pos.position -= movement,
                 }
             }
+        }
+    }
+}
+
+fn enemy_bullet_system(
+    mut commands: Commands,
+    mut enemy_query: Query<(Entity, &WorldPosition, &mut Enemy), Without<Bullet>>,
+    bullet_query: Query<(Entity, &WorldPosition, &Bullet), Without<Player>>,
+) {
+    let bullet_size = Vec2::new(4., 4.);
+    let enemy_size = Vec2::new(16., 12.);
+
+    for (enemy_entity, enemy_position, mut enemy) in &mut enemy_query {
+        let enemy_pos = enemy_position.position.extend(0.);
+
+        let filtered = bullet_query
+            .iter()
+            .filter_map(|(entity, pos, bullet)| match bullet.0 {
+                BulletType::Player => Some((entity, pos)),
+                _ => None,
+            });
+        for (entity, bullet_pos) in filtered {
+            if let Some(_) = collide(
+                enemy_pos,
+                enemy_size,
+                bullet_pos.position.extend(0.),
+                bullet_size,
+            ) {
+                enemy.health -= 1;
+                commands.entity(entity).despawn();
+            }
+        }
+        if enemy.health <= 0 {
+            commands.entity(enemy_entity).despawn();
         }
     }
 }
