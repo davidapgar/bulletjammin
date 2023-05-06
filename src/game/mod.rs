@@ -5,6 +5,7 @@ use audio::Audio;
 use bevy::prelude::*;
 
 pub mod animation;
+pub mod assets;
 pub mod audio;
 pub mod enemy;
 pub mod menu;
@@ -29,6 +30,7 @@ impl bevy::app::Plugin for Plugin {
             .add_startup_system(spawn_camera)
             .add_system(button_system);
         app.add_plugin(menu::MenuPlugin)
+            .add_plugin(assets::AssetPlugin)
             .add_plugin(animation::AnimationPlugin)
             .add_plugin(audio::AudioPlugin)
             .add_plugin(enemy::EnemyPlugin)

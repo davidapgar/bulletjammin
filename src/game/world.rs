@@ -1,4 +1,5 @@
 use super::animation::{Animated, Animation, AnimationFrame};
+use super::assets::Sprites;
 use super::audio::Audio;
 use super::enemy::Enemy;
 use super::player::{Player, PlayerAnimations};
@@ -38,12 +39,6 @@ impl Default for SongTimer {
             idx: 0,
         }
     }
-}
-
-#[derive(Resource, Default)]
-pub struct Sprites {
-    pub blast: Handle<TextureAtlas>,
-    pub shot: Handle<TextureAtlas>,
 }
 
 #[derive(Component)]
@@ -92,41 +87,11 @@ fn world_startup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-    mut sprites: ResMut<Sprites>,
+    mut sprites: Res<Sprites>,
 ) {
-    let (player_sprite, floor_sprite, wall_sprite, blast_sprite, enemy_sprite, shot_sprite) = (
-        asset_server.load("sprites/player.png"),
-        asset_server.load("sprites/floor.png"),
-        asset_server.load("sprites/wall.png"),
-        asset_server.load("sprites/blast.png"),
-        asset_server.load("sprites/sheep.png"),
-        asset_server.load("sprites/shot.png"),
-    );
-
-    let (player_atlas, floor_atlas, wall_atlas, blast_atlas, enemy_atlas, shot_atlas) = (
-        TextureAtlas::from_grid(player_sprite, Vec2::new(16.0, 16.0), 8, 1, None, None),
-        TextureAtlas::from_grid(floor_sprite, Vec2::new(16.0, 16.0), 1, 1, None, None),
-        TextureAtlas::from_grid(wall_sprite, Vec2::new(16.0, 16.0), 1, 1, None, None),
-        TextureAtlas::from_grid(blast_sprite, Vec2::new(8.0, 8.0), 2, 1, None, None),
-        TextureAtlas::from_grid(enemy_sprite, Vec2::new(16.0, 16.0), 3, 1, None, None),
-        TextureAtlas::from_grid(shot_sprite, Vec2::new(8.0, 8.0), 2, 1, None, None),
-    );
-
-    let (player_handle, floor_handle, wall_handle, blast_handle, enemy_handle, shot_handle) = (
-        texture_atlases.add(player_atlas),
-        texture_atlases.add(floor_atlas),
-        texture_atlases.add(wall_atlas),
-        texture_atlases.add(blast_atlas),
-        texture_atlases.add(enemy_atlas),
-        texture_atlases.add(shot_atlas),
-    );
-
-    sprites.blast = blast_handle.clone();
-    sprites.shot = shot_handle.clone();
-
     commands.spawn((
         SpriteSheetBundle {
-            texture_atlas: player_handle,
+            texture_atlas: sprites.player.clone(),
             sprite: TextureAtlasSprite::new(0),
             ..default()
         },
@@ -143,7 +108,7 @@ fn world_startup(
     ];
     commands.spawn((
         SpriteSheetBundle {
-            texture_atlas: enemy_handle,
+            texture_atlas: sprites.sheep.clone(),
             sprite: TextureAtlasSprite::new(0),
             ..default()
         },
@@ -152,7 +117,7 @@ fn world_startup(
         Animation::new(enemy_frames, true),
     ));
 
-    spawn_world_grid(&mut commands, floor_handle, wall_handle);
+    spawn_world_grid(&mut commands, sprites.floor.clone(), sprites.wall.clone());
 }
 
 fn spawn_world_grid(

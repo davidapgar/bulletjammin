@@ -1,5 +1,6 @@
 use super::animation::{Animated, Animation, AnimationFrame, AnimationMarker};
-use super::world::{Bullet, BulletType, Moveable, Sprites, Wall, WorldPosition};
+use super::assets::Sprites;
+use super::world::{Bullet, BulletType, Moveable, Wall, WorldPosition};
 use super::GameState;
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
