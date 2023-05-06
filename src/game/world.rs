@@ -37,8 +37,9 @@ impl Default for SongTimer {
 }
 
 #[derive(Resource, Default)]
-struct Sprites {
-    blast: Handle<TextureAtlas>,
+pub struct Sprites {
+    pub blast: Handle<TextureAtlas>,
+    pub shot: Handle<TextureAtlas>,
 }
 
 #[derive(Component)]
@@ -75,7 +76,7 @@ impl World {
 }
 
 #[derive(Component)]
-struct Moveable(Vec2);
+pub struct Moveable(pub Vec2);
 
 impl WorldPosition {
     pub fn new(position: Vec2, layer: f32) -> Self {
@@ -91,31 +92,35 @@ fn world_startup(
 ) {
     commands.spawn(Camera2dBundle::default());
 
-    let (player_sprite, floor_sprite, wall_sprite, blast_sprite, enemy_sprite) = (
+    let (player_sprite, floor_sprite, wall_sprite, blast_sprite, enemy_sprite, shot_sprite) = (
         asset_server.load("sprites/player.png"),
         asset_server.load("sprites/floor.png"),
         asset_server.load("sprites/wall.png"),
         asset_server.load("sprites/blast.png"),
         asset_server.load("sprites/sheep.png"),
+        asset_server.load("sprites/shot.png"),
     );
 
-    let (player_atlas, floor_atlas, wall_atlas, blast_atlas, enemy_atlas) = (
+    let (player_atlas, floor_atlas, wall_atlas, blast_atlas, enemy_atlas, shot_atlas) = (
         TextureAtlas::from_grid(player_sprite, Vec2::new(16.0, 16.0), 8, 1, None, None),
         TextureAtlas::from_grid(floor_sprite, Vec2::new(16.0, 16.0), 1, 1, None, None),
         TextureAtlas::from_grid(wall_sprite, Vec2::new(16.0, 16.0), 1, 1, None, None),
         TextureAtlas::from_grid(blast_sprite, Vec2::new(8.0, 8.0), 2, 1, None, None),
         TextureAtlas::from_grid(enemy_sprite, Vec2::new(16.0, 16.0), 3, 1, None, None),
+        TextureAtlas::from_grid(shot_sprite, Vec2::new(8.0, 8.0), 2, 1, None, None),
     );
 
-    let (player_handle, floor_handle, wall_handle, blast_handle, enemy_handle) = (
+    let (player_handle, floor_handle, wall_handle, blast_handle, enemy_handle, shot_handle) = (
         texture_atlases.add(player_atlas),
         texture_atlases.add(floor_atlas),
         texture_atlases.add(wall_atlas),
         texture_atlases.add(blast_atlas),
         texture_atlases.add(enemy_atlas),
+        texture_atlases.add(shot_atlas),
     );
 
     sprites.blast = blast_handle.clone();
+    sprites.shot = shot_handle.clone();
 
     let animation_set = HashMap::from([
         (

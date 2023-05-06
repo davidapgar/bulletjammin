@@ -1,4 +1,5 @@
-use super::world::{Bullet, BulletType, Wall, WorldPosition};
+use super::animation::{Animation, AnimationFrame};
+use super::world::{Bullet, BulletType, Moveable, Sprites, Wall, WorldPosition};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
 
@@ -110,6 +111,7 @@ fn player_input_system(
 fn player_shooting_system(
     mut commands: Commands,
     time: Res<Time>,
+    sprites: Res<Sprites>,
     windows: Query<&Window>,
     mut player_query: Query<(&WorldPosition, &mut Player)>,
     mouse_button_input: Res<Input<MouseButton>>,
@@ -125,7 +127,20 @@ fn player_shooting_system(
     if mouse_button_input.pressed(MouseButton::Left) {
         if player.cooldown.finished() {
             let heading = (cursor_position - p_pos.position * 2.).normalize_or_zero();
-            println!("Would shoot at heading {:?}", heading);
+            commands.spawn((
+                SpriteSheetBundle {
+                    texture_atlas: sprites.shot.clone(),
+                    transform: Transform::from_translation(Vec3::new(0., 0., -1.)),
+                    ..default()
+                },
+                Bullet(BulletType::Player),
+                Moveable(heading * 4.0),
+                WorldPosition::new(p_pos.position, 1.),
+                Animation::new(
+                    vec![AnimationFrame::new(0, 0.250), AnimationFrame::new(1, 0.250)],
+                    true,
+                ),
+            ));
             player.cooldown = Timer::from_seconds(0.1, TimerMode::Once);
         }
     }
