@@ -1,4 +1,4 @@
-use super::animation::{Animation, AnimationFrame};
+use super::animation::{Animated, Animation, AnimationFrame, AnimationMarker};
 use super::world::{Bullet, BulletType, Moveable, Sprites, Wall, WorldPosition};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
@@ -10,24 +10,10 @@ use bevy::sprite::collide_aabb::{collide, Collision};
 // ~Tracker based sound generation, tied to bullet spawning
 //  partial, it's a bit tightly coupled.
 // Make it good
-// Enemies? Or just run around?
+// ~Enemies
 // Animations
+//  partial. Need stacking animations, repeatable.
 // !!!!!!!!!
-
-#[derive(Component)]
-pub struct Player {
-    health: i32,
-    cooldown: Timer,
-}
-
-impl Default for Player {
-    fn default() -> Self {
-        Player {
-            health: 8,
-            cooldown: Timer::default(),
-        }
-    }
-}
 
 pub struct PlayerPlugin;
 
@@ -37,7 +23,67 @@ impl bevy::app::Plugin for PlayerPlugin {
             .add_system(player_input_system)
             .add_system(player_bullet_system)
             .add_system(player_shooting_system)
+            .add_system(player_animation_system)
             .add_system(update_health_system);
+    }
+}
+
+#[derive(Component)]
+pub struct Player {
+    health: i32,
+    cooldown: Timer,
+    facing: Facing,
+}
+
+impl Default for Player {
+    fn default() -> Self {
+        Player {
+            health: 8,
+            cooldown: Timer::default(),
+            facing: Facing::Down,
+        }
+    }
+}
+
+enum Facing {
+    Down,
+    Up,
+    Right,
+    Left,
+}
+
+impl Facing {
+    fn from(heading: Vec2) -> Self {
+        if heading.x.abs() > heading.y.abs() {
+            if heading.x > 0. {
+                Facing::Right
+            } else {
+                Facing::Left
+            }
+        } else {
+            if heading.y > 0. {
+                Facing::Up
+            } else {
+                Facing::Down
+            }
+        }
+    }
+}
+
+#[derive(PartialEq)]
+pub enum PlayerAnimations {
+    Down,
+    Up,
+    Left,
+    Right,
+}
+
+impl AnimationMarker for PlayerAnimations {
+    fn animation(&self) -> Animation {
+        Animation::new(
+            vec![AnimationFrame::new(0, 0.250), AnimationFrame::new(1, 0.250)],
+            true,
+        )
     }
 }
 
@@ -127,6 +173,7 @@ fn player_shooting_system(
     if mouse_button_input.pressed(MouseButton::Left) {
         if player.cooldown.finished() {
             let heading = (cursor_position - p_pos.position * 2.).normalize_or_zero();
+            player.facing = Facing::from(heading);
             commands.spawn((
                 SpriteSheetBundle {
                     texture_atlas: sprites.shot.clone(),
@@ -172,6 +219,24 @@ fn player_bullet_system(
             ) {
                 player.health -= 1;
                 commands.entity(entity).despawn();
+            }
+        }
+    }
+}
+
+fn player_animation_system(
+    time: Res<Time>,
+    mut player_query: Query<(
+        &Player,
+        &mut Animated<PlayerAnimations>,
+        &mut TextureAtlasSprite,
+    )>,
+) {
+    for (_player, mut animated, mut sprite) in &mut player_query {
+        animated.set_animation(PlayerAnimations::Down);
+        if animated.tick(time.delta()) {
+            if let Some(frame) = animated.next_frame() {
+                sprite.index = frame.idx;
             }
         }
     }

@@ -1,8 +1,8 @@
-use super::animation::{Animation, AnimationFrame, AnimationSet};
+use super::animation::{Animated, Animation, AnimationFrame};
 use super::audio::audio_generator::*;
 use super::audio::Audio;
 use super::enemy::Enemy;
-use super::player::Player;
+use super::player::{Player, PlayerAnimations};
 use super::song::{mary_song, Song};
 use bevy::prelude::*;
 use std::collections::HashMap;
@@ -65,8 +65,8 @@ pub struct WorldPosition {
 // TODO: This should likely be a resource. Also does this make sense?
 // It could/should hold children?
 #[derive(Component)]
-struct World {
-    size: Vec2,
+pub struct World {
+    pub size: Vec2,
 }
 
 impl World {
@@ -122,26 +122,6 @@ fn world_startup(
     sprites.blast = blast_handle.clone();
     sprites.shot = shot_handle.clone();
 
-    let animation_set = HashMap::from([
-        (
-            "Down",
-            Animation::new(vec![AnimationFrame::new(0, 0.125)], true),
-        ),
-        (
-            "Up",
-            Animation::new(vec![AnimationFrame::new(2, 0.125)], true),
-        ),
-        (
-            "Right",
-            Animation::new(vec![AnimationFrame::new(4, 0.125)], true),
-        ),
-        (
-            "Left",
-            Animation::new(vec![AnimationFrame::new(6, 0.125)], true),
-        ),
-    ]);
-    let player_animations = AnimationSet::new(animation_set);
-
     commands.spawn((
         SpriteSheetBundle {
             texture_atlas: player_handle,
@@ -150,11 +130,7 @@ fn world_startup(
         },
         Player::default(),
         WorldPosition::new(Vec2::new(5. * 16., 5. * 16.), 1.),
-        Animation::new(
-            vec![AnimationFrame::new(0, 0.125), AnimationFrame::new(1, 0.025)],
-            true,
-        ),
-        player_animations,
+        Animated::<PlayerAnimations>::default(),
     ));
 
     let enemy_frames = vec![
