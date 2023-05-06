@@ -16,11 +16,15 @@ use bevy::sprite::collide_aabb::{collide, Collision};
 #[derive(Component)]
 pub struct Player {
     health: i32,
+    cooldown: Timer,
 }
 
 impl Default for Player {
     fn default() -> Self {
-        Player { health: 8 }
+        Player {
+            health: 8,
+            cooldown: Timer::default(),
+        }
     }
 }
 
@@ -31,6 +35,7 @@ impl bevy::app::Plugin for PlayerPlugin {
         app.add_startup_system(health_ui_startup_system)
             .add_system(player_input_system)
             .add_system(player_bullet_system)
+            .add_system(player_shooting_system)
             .add_system(update_health_system);
     }
 }
@@ -98,6 +103,30 @@ fn player_input_system(
                 Collision::Bottom | Collision::Top => player.position.y -= movement.y,
                 Collision::Inside => player.position -= movement,
             }
+        }
+    }
+}
+
+fn player_shooting_system(
+    mut commands: Commands,
+    time: Res<Time>,
+    windows: Query<&Window>,
+    mut player_query: Query<(&WorldPosition, &mut Player)>,
+    mouse_button_input: Res<Input<MouseButton>>,
+) {
+    let window = windows.single();
+    let (p_pos, mut player) = player_query.single_mut();
+    player.cooldown.tick(time.delta());
+
+    let Some(cursor_position) = window.cursor_position() else {
+        return;
+    };
+
+    if mouse_button_input.pressed(MouseButton::Left) {
+        if player.cooldown.finished() {
+            let heading = (cursor_position - p_pos.position * 2.).normalize_or_zero();
+            println!("Would shoot at heading {:?}", heading);
+            player.cooldown = Timer::from_seconds(0.1, TimerMode::Once);
         }
     }
 }
