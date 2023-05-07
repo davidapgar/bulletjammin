@@ -137,8 +137,30 @@ fn world_startup(
 
     spawn_world_grid(&mut commands, sprites.floor.clone(), sprites.wall.clone());
 
-    let cannon = Cannon::new(12, 0, Vec2::new(1.0, 0.));
-    spawn_cannon(cannon, &mut commands, Vec2::new(16., 16.), &sprites);
+    spawn_cannon(
+        Cannon::new(12, 0, Vec2::new(1., 0.)),
+        &mut commands,
+        Vec2::new(16., 16.),
+        &sprites,
+    );
+    spawn_cannon(
+        Cannon::new(12, 0, Vec2::new(0., 1.)),
+        &mut commands,
+        Vec2::new(32., 16.),
+        &sprites,
+    );
+    spawn_cannon(
+        Cannon::new(12, 0, Vec2::new(-1., 0.)),
+        &mut commands,
+        Vec2::new(24. * 16., 16.),
+        &sprites,
+    );
+    spawn_cannon(
+        Cannon::new(12, 0, Vec2::new(0., -1.)),
+        &mut commands,
+        Vec2::new(32., 16. * 16.),
+        &sprites,
+    );
 }
 
 fn spawn_world_grid(
