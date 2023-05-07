@@ -10,22 +10,22 @@ pub struct Song {
 }
 
 impl Song {
-    pub fn note(&self, idx: usize) -> Notes {
+    pub fn note(&self, idx: usize, chain: usize) -> Notes {
         let mut notes: Notes = [None, None, None, None];
         for i in 0..self.tracks.len() {
             if i >= 4 {
                 break;
             }
 
-            notes[i] = self.tracks[i].note(idx);
+            notes[i] = self.tracks[i].note(idx, chain);
         }
         notes
     }
 
-    pub fn len(&self) -> usize {
+    pub fn len(&self, chain: usize) -> usize {
         let mut max = 0;
         for track in &self.tracks {
-            let len = track.len();
+            let len = track.len(chain);
             if len > max {
                 max = len;
             }
@@ -39,24 +39,20 @@ pub struct Track {
 }
 
 impl Track {
-    fn note(&self, mut idx: usize) -> Option<(i32, RawSource)> {
-        for chain in &self.chains {
-            if idx < chain.len() {
-                return chain.note(idx);
-            }
-            idx -= chain.len();
+    fn note(&self, idx: usize, chain: usize) -> Option<(i32, RawSource)> {
+        if chain >= self.chains.len() {
+            None
+        } else {
+            self.chains[chain].note(idx)
         }
-        None
     }
 
-    fn len(&self) -> usize {
-        let mut len = 0usize;
-
-        for chain in &self.chains {
-            len += chain.len();
+    fn len(&self, chain: usize) -> usize {
+        if chain >= self.chains.len() {
+            0
+        } else {
+            self.chains[chain].len()
         }
-
-        len
     }
 }
 
@@ -66,6 +62,10 @@ pub struct Chain {
 
 impl Chain {
     fn note(&self, mut idx: usize) -> Option<(i32, RawSource)> {
+        if idx > self.len() {
+            idx = idx % self.len();
+        }
+
         for phrase in &self.phrases {
             if idx < phrase.len() {
                 return phrase.note(idx);

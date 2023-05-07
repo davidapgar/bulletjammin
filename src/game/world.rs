@@ -226,7 +226,7 @@ fn spawn_system(
     if song_timer.timer.finished() {
         on_beat.0 = false;
 
-        for (idx, maybe_note) in song.note(song_timer.idx).into_iter().enumerate() {
+        for (idx, maybe_note) in song.note(song_timer.idx, 0).into_iter().enumerate() {
             if let Some((note, source)) = maybe_note {
                 if idx == 0 {
                     on_beat.0 = true;
@@ -257,7 +257,7 @@ fn spawn_system(
         }
 
         song_timer.idx += 1;
-        if song_timer.idx >= song.len() {
+        if song_timer.idx >= song.len(0) {
             song_timer.idx = 0;
         }
 
