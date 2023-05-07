@@ -137,6 +137,39 @@ impl Phrase {
         }
     }
 
+    fn quarter<G>(notes: &'static str, sound_gen: G) -> Self
+    where
+        G: Fn(f32) -> RawSource + Sync + Send + 'static,
+    {
+        Self {
+            notes,
+            phrase_type: PhraseType::Quarter,
+            sound_gen: Box::new(sound_gen),
+        }
+    }
+
+    fn eigth<G>(notes: &'static str, sound_gen: G) -> Self
+    where
+        G: Fn(f32) -> RawSource + Sync + Send + 'static,
+    {
+        Self {
+            notes,
+            phrase_type: PhraseType::Eigth,
+            sound_gen: Box::new(sound_gen),
+        }
+    }
+
+    fn sixteenth<G>(notes: &'static str, sound_gen: G) -> Self
+    where
+        G: Fn(f32) -> RawSource + Sync + Send + 'static,
+    {
+        Self {
+            notes,
+            phrase_type: PhraseType::Sixteenth,
+            sound_gen: Box::new(sound_gen),
+        }
+    }
+
     fn len(&self) -> usize {
         self.notes.len() * self.phrase_type.mult()
     }
@@ -166,28 +199,78 @@ impl Phrase {
             let frequency = frequency_per_volt(voltage + 0.2);
             Some((note, (self.sound_gen)(frequency)))
         } else if note_byte >= '0' as u8 && note_byte <= '9' as u8 {
-            let voltage = note_byte as f32 / 120.;
+            let byte = note_byte - '0' as u8;
+            let voltage = byte as f32 / 120.;
             let frequency = frequency_per_volt(voltage);
-            Some((note_byte as i32, (self.sound_gen)(frequency)))
+            Some((byte as i32, (self.sound_gen)(frequency)))
         } else {
             None
         }
     }
 }
 
+fn square_horn(frequency: f32) -> RawSource {
+    Vca::new(
+        Vco::new(
+            Vcf::new(
+                SquareWave::new(frequency as f32).as_raw(),
+                frequency / 4.,
+                1.0,
+            ),
+            frequency / 2.,
+            Envelope::new(0.3, 0.1, 0.05, 0.1),
+        ),
+        Envelope::new(0.3, 0.05, 0.05, 0.2),
+    )
+    .as_raw()
+}
+
+fn kick(frequency: f32) -> RawSource {
+    let kick_env = Envelope::new(1.0, 0.001, 0.1, 0.3);
+    let freq_env = Envelope::new(0.02, 0.0, 0.0, 0.2);
+    let vco = Vco::new(TriangleWave::new(frequency), frequency, freq_env);
+    let osc = Attenuator::new(vco, 2.0);
+    let vca = Vca::new(osc, kick_env);
+
+    vca.as_raw()
+}
+
+fn snare(_frequency: f32) -> RawSource {
+    let snare_env = Envelope::new(0.2, 0.001, 0.0, 0.3);
+    let osc = NoiseLFSR::new(20000.);
+    let vca = Vca::new(osc, snare_env);
+    vca.as_raw()
+}
+
+// TODO: Convert all of these to voltage for easier drum type selection
+fn drum(frequency: f32) -> RawSource {
+    if frequency < 100. {
+        kick(frequency)
+    } else {
+        snare(frequency)
+    }
+}
+
 pub fn mary_song() -> Song {
-    let phrases = vec![
-        Phrase::new("edcdeee_"),
-        Phrase::new("ddd_cgg_"),
-        Phrase::new("edcdeee_"),
-        Phrase::new("ddedc___"),
-    ];
-    let chain = Chain { phrases };
-    let track = Track {
-        chains: vec![chain],
-    };
-    let song = Song {
-        tracks: vec![track],
-    };
-    song
+    Song {
+        tracks: vec![
+            // melody
+            Track {
+                chains: vec![Chain {
+                    phrases: vec![
+                        Phrase::eigth("edcdeee_", square_horn),
+                        Phrase::eigth("ddd_cgg_", square_horn),
+                        Phrase::eigth("edcdeee_", square_horn),
+                        Phrase::eigth("ddedc___", square_horn),
+                    ],
+                }],
+            },
+            // drums
+            Track {
+                chains: vec![Chain {
+                    phrases: vec![Phrase::sixteenth("009_90_0_0_0009_", drum)],
+                }],
+            },
+        ],
+    }
 }
