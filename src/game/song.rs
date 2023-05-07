@@ -2,18 +2,35 @@ use super::audio::audio_generator::*;
 use super::audio::Audio;
 use bevy::prelude::*;
 
+pub type Notes = [Option<(i32, RawSource)>; 4];
+
 #[derive(Resource)]
 pub struct Song {
     tracks: Vec<Track>,
 }
 
 impl Song {
-    pub fn note(&self, idx: usize) -> Option<(i32, RawSource)> {
-        self.tracks[0].note(idx)
+    pub fn note(&self, idx: usize) -> Notes {
+        let mut notes: Notes = [None, None, None, None];
+        for i in 0..self.tracks.len() {
+            if i >= 4 {
+                break;
+            }
+
+            notes[i] = self.tracks[i].note(idx);
+        }
+        notes
     }
 
     pub fn len(&self) -> usize {
-        self.tracks[0].len()
+        let mut max = 0;
+        for track in &self.tracks {
+            let len = track.len();
+            if len > max {
+                max = len;
+            }
+        }
+        max
     }
 }
 

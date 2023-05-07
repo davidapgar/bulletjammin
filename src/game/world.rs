@@ -235,27 +235,31 @@ fn spawn_system(
     if song_timer.timer.finished() {
         on_beat.0 = !on_beat.0;
 
-        if let Some((note, source)) = song.note(song_timer.idx) {
-            let (spawn_pos, heading) = (
-                cannon_pos.position + cannon.spawn_offset(note),
-                cannon.heading * 4.,
-            );
+        for (idx, maybe_note) in song.note(song_timer.idx).into_iter().enumerate() {
+            if let Some((note, source)) = maybe_note {
+                for (cannon, cannon_pos) in cannon_query.iter().filter(|(c, _)| c.track == idx) {
+                    let (spawn_pos, heading) = (
+                        cannon_pos.position + cannon.spawn_offset(note),
+                        cannon.heading * 4.,
+                    );
 
-            commands.spawn((
-                SpriteSheetBundle {
-                    texture_atlas: sprites.blast.clone(),
-                    transform: Transform::from_translation(Vec3::new(0., 0., -1.)),
-                    ..default()
-                },
-                Bullet(BulletType::Enemy),
-                Moveable(heading),
-                WorldPosition::new(spawn_pos, 1.),
-                Animation::new(
-                    vec![AnimationFrame::new(0, 0.250), AnimationFrame::new(1, 0.250)],
-                    true,
-                ),
-            ));
-            audio.play(source);
+                    commands.spawn((
+                        SpriteSheetBundle {
+                            texture_atlas: sprites.blast.clone(),
+                            transform: Transform::from_translation(Vec3::new(0., 0., -1.)),
+                            ..default()
+                        },
+                        Bullet(BulletType::Enemy),
+                        Moveable(heading),
+                        WorldPosition::new(spawn_pos, 1.),
+                        Animation::new(
+                            vec![AnimationFrame::new(0, 0.250), AnimationFrame::new(1, 0.250)],
+                            true,
+                        ),
+                    ));
+                }
+                audio.play(source);
+            }
         }
 
         song_timer.idx += 1;

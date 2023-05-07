@@ -8,11 +8,13 @@ use bevy::sprite::collide_aabb::{collide, Collision};
 // !!!!!!!!!
 // ~Implement collisions
 // ~health for player
-// Implement game over
+// ~Implement game over
 // ~player stats on top of screen
 // ~Tracker based sound generation, tied to bullet spawning
 //  Moar tracks, tie correctly to cannon clusters.
 //  Progress the song based on <something>
+// ~Only shoot on the "beat"
+//  Make this tied to track 0 triggering (drum track)
 // Make it good
 // ~Enemies
 //  Add spawning, removing progresses the song.
