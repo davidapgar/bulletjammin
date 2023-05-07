@@ -233,10 +233,13 @@ fn spawn_system(
     song_timer.timer.tick(time.delta());
 
     if song_timer.timer.finished() {
-        on_beat.0 = !on_beat.0;
+        on_beat.0 = false;
 
         for (idx, maybe_note) in song.note(song_timer.idx).into_iter().enumerate() {
             if let Some((note, source)) = maybe_note {
+                if idx == 0 {
+                    on_beat.0 = true;
+                }
                 for (cannon, cannon_pos) in cannon_query.iter().filter(|(c, _)| c.track == idx) {
                     let (spawn_pos, heading) = (
                         cannon_pos.position + cannon.spawn_offset(note),
