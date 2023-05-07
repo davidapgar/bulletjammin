@@ -218,9 +218,6 @@ fn spawn_system(
     mut on_beat: ResMut<OnBeat>,
     cannon_query: Query<(&Cannon, &WorldPosition)>,
 ) {
-    // TODO: Handle multiple banks of cannons
-    let (cannon, cannon_pos) = cannon_query.iter().find(|(c, _)| c.track == 0).unwrap();
-
     song_timer.timer.tick(time.delta());
 
     if song_timer.timer.finished() {

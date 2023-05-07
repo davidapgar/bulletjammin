@@ -115,25 +115,14 @@ pub struct Phrase {
 }
 
 impl Phrase {
-    fn new(notes: &'static str) -> Self {
+    fn new<G>(notes: &'static str, phrase_type: PhraseType, sound_gen: G) -> Self
+    where
+        G: Fn(f32) -> RawSource + Sync + Send + 'static,
+    {
         Self {
             notes,
-            phrase_type: PhraseType::Eigth,
-            sound_gen: Box::new(|frequency| {
-                Vca::new(
-                    Vco::new(
-                        Vcf::new(
-                            SquareWave::new(frequency as f32).as_raw(),
-                            frequency / 4.,
-                            1.0,
-                        ),
-                        frequency / 2.,
-                        Envelope::new(0.3, 0.1, 0.05, 0.1),
-                    ),
-                    Envelope::new(0.3, 0.05, 0.05, 0.2),
-                )
-                .as_raw()
-            }),
+            phrase_type,
+            sound_gen: Box::new(sound_gen),
         }
     }
 
@@ -141,33 +130,21 @@ impl Phrase {
     where
         G: Fn(f32) -> RawSource + Sync + Send + 'static,
     {
-        Self {
-            notes,
-            phrase_type: PhraseType::Quarter,
-            sound_gen: Box::new(sound_gen),
-        }
+        Self::new(notes, PhraseType::Quarter, sound_gen)
     }
 
     fn eigth<G>(notes: &'static str, sound_gen: G) -> Self
     where
         G: Fn(f32) -> RawSource + Sync + Send + 'static,
     {
-        Self {
-            notes,
-            phrase_type: PhraseType::Eigth,
-            sound_gen: Box::new(sound_gen),
-        }
+        Self::new(notes, PhraseType::Eigth, sound_gen)
     }
 
     fn sixteenth<G>(notes: &'static str, sound_gen: G) -> Self
     where
         G: Fn(f32) -> RawSource + Sync + Send + 'static,
     {
-        Self {
-            notes,
-            phrase_type: PhraseType::Sixteenth,
-            sound_gen: Box::new(sound_gen),
-        }
+        Self::new(notes, PhraseType::Sixteenth, sound_gen)
     }
 
     fn len(&self) -> usize {
