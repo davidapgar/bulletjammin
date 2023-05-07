@@ -1,6 +1,7 @@
 use super::animation::{Animated, Animation, AnimationFrame};
 use super::assets::Sprites;
 use super::audio::Audio;
+use super::cannon::{spawn_cannon, Cannon};
 use super::enemy::Enemy;
 use super::player::{Player, PlayerAnimations};
 use super::song::{mary_song, Song};
@@ -135,6 +136,9 @@ fn world_startup(
     ));
 
     spawn_world_grid(&mut commands, sprites.floor.clone(), sprites.wall.clone());
+
+    let cannon = Cannon::new(12, 0, Vec2::new(1.0, 0.));
+    spawn_cannon(cannon, &mut commands, Vec2::new(16., 16.), &sprites);
 }
 
 fn spawn_world_grid(
