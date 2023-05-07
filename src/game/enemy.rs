@@ -21,7 +21,10 @@ impl bevy::app::Plugin for EnemyPlugin {
     }
 }
 
-enum EnemyType {
+pub struct EnemyKilledEvent(EnemyType);
+
+#[derive(Copy, Clone)]
+pub enum EnemyType {
     Basic,
     Boss,
 }
@@ -172,6 +175,7 @@ fn enemy_bullet_system(
         Without<Bullet>,
     >,
     bullet_query: Query<(Entity, &WorldPosition, &Bullet), Without<Player>>,
+    mut event_writer: EventWriter<EnemyKilledEvent>,
 ) {
     let bullet_size = Vec2::new(4., 4.);
     let enemy_size = Vec2::new(16., 12.);
@@ -202,6 +206,7 @@ fn enemy_bullet_system(
         }
         if enemy.health <= 0 {
             commands.entity(enemy_entity).despawn();
+            event_writer.send(EnemyKilledEvent(enemy.enemy_type));
         }
     }
 }

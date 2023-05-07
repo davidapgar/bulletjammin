@@ -2,7 +2,7 @@ use super::animation::{Animated, AnimationFrame};
 use super::assets::Sprites;
 use super::audio::Audio;
 use super::cannon::{spawn_cannon, Cannon};
-use super::enemy::{Enemy, EnemyAnimations};
+use super::enemy::{Enemy, EnemyAnimations, EnemyKilledEvent, EnemyType};
 use super::player::{OnBeat, Player, PlayerAnimations};
 use super::song::{mary_song, Song};
 use super::GameState;
@@ -15,11 +15,13 @@ impl bevy::app::Plugin for WorldPlugin {
         app.insert_resource(Sprites::default())
             .insert_resource(mary_song())
             .insert_resource(SongTimer::default())
+            .add_event::<EnemyKilledEvent>()
             .add_system(world_startup.in_schedule(OnEnter(GameState::Playing)))
             .add_systems(
                 (
                     spawn_system,
                     move_system,
+                    song_progression_system,
                     transform_world_system.after(spawn_system),
                 )
                     .in_set(OnUpdate(GameState::Playing)),
@@ -144,14 +146,14 @@ fn world_startup(
     );
     // Right
     spawn_cannon(
-        Cannon::new(12, 2, Vec2::new(-1., 0.)),
+        Cannon::new(12, 0, Vec2::new(-1., 0.)),
         &mut commands,
         Vec2::new(24. * 16., 16.),
         &sprites,
     );
     // Top
     spawn_cannon(
-        Cannon::new(12, 3, Vec2::new(0., -1.)),
+        Cannon::new(12, 1, Vec2::new(0., -1.)),
         &mut commands,
         Vec2::new((24. - 12.) * 16., 16. * 16.),
         &sprites,
@@ -205,6 +207,17 @@ fn spawn_world_grid(
                 WorldPosition::new(Vec2::new((x * 16) as f32, (y * 16) as f32), 0.),
             ));
         }
+    }
+}
+
+fn song_progression_system(
+    mut event_reader: EventReader<EnemyKilledEvent>,
+    mut world_query: Query<&mut World>,
+) {
+    let world = world_query.single_mut();
+
+    for event in event_reader.iter() {
+        println!("Got a kill event");
     }
 }
 
