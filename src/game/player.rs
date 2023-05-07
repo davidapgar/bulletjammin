@@ -8,20 +8,28 @@ use bevy::sprite::collide_aabb::{collide, Collision};
 // !!!!!!!!!
 // ~Implement collisions
 // ~health for player
+// Implement game over
 // ~player stats on top of screen
 // ~Tracker based sound generation, tied to bullet spawning
-//  partial, it's a bit tightly coupled.
+//  Moar tracks, tie correctly to cannon clusters.
+//  Progress the song based on <something>
 // Make it good
 // ~Enemies
-// Animations
+//  Add spawning, removing progresses the song.
+// ~Animations
 //  partial. Need stacking animations, repeatable.
+//  Apply to everything...
 // !!!!!!!!!
 
 pub struct PlayerPlugin;
 
+#[derive(Resource, Default)]
+pub struct OnBeat(pub bool);
+
 impl bevy::app::Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(health_ui_startup_system.in_schedule(OnEnter(GameState::Playing)))
+        app.init_resource::<OnBeat>()
+            .add_system(health_ui_startup_system.in_schedule(OnEnter(GameState::Playing)))
             .add_systems(
                 (
                     player_input_system,
@@ -165,6 +173,7 @@ fn player_shooting_system(
     mut commands: Commands,
     time: Res<Time>,
     sprites: Res<Sprites>,
+    on_beat: Res<OnBeat>,
     windows: Query<&Window>,
     mut player_query: Query<(&WorldPosition, &mut Player)>,
     mouse_button_input: Res<Input<MouseButton>>,
@@ -178,7 +187,7 @@ fn player_shooting_system(
     };
 
     if mouse_button_input.pressed(MouseButton::Left) {
-        if player.cooldown.finished() {
+        if player.cooldown.finished() && on_beat.0 {
             let heading = (cursor_position - p_pos.position * 2.).normalize_or_zero();
             player.facing = Facing::from(heading);
             commands.spawn((

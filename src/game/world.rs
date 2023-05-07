@@ -3,7 +3,7 @@ use super::assets::Sprites;
 use super::audio::Audio;
 use super::cannon::{spawn_cannon, Cannon};
 use super::enemy::Enemy;
-use super::player::{Player, PlayerAnimations};
+use super::player::{OnBeat, Player, PlayerAnimations};
 use super::song::{mary_song, Song};
 use super::GameState;
 use bevy::prelude::*;
@@ -224,6 +224,7 @@ fn spawn_system(
     song: Res<Song>,
     time: Res<Time>,
     audio: Res<Audio>,
+    mut on_beat: ResMut<OnBeat>,
     cannon_query: Query<(&Cannon, &WorldPosition)>,
 ) {
     // TODO: Handle multiple banks of cannons
@@ -231,7 +232,9 @@ fn spawn_system(
 
     song_timer.timer.tick(time.delta());
 
-    if song_timer.timer.just_finished() {
+    if song_timer.timer.finished() {
+        on_beat.0 = !on_beat.0;
+
         if let Some((note, source)) = song.note(song_timer.idx) {
             let (spawn_pos, heading) = (
                 cannon_pos.position + cannon.spawn_offset(note),
