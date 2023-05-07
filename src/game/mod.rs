@@ -34,6 +34,7 @@ impl bevy::app::Plugin for Plugin {
             .add_plugin(assets::AssetPlugin)
             .add_plugin(animation::AnimationPlugin)
             .add_plugin(audio::AudioPlugin)
+            .add_plugin(cannon::CannonPlugin)
             .add_plugin(enemy::EnemyPlugin)
             .add_plugin(player::PlayerPlugin)
             .add_plugin(world::WorldPlugin);

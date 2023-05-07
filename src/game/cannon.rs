@@ -3,14 +3,20 @@ use super::world::WorldPosition;
 use super::GameState;
 use bevy::prelude::*;
 
-// TODO: Needed?
 pub struct CannonPlugin;
+
+impl bevy::app::Plugin for CannonPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(cannon_move_system.in_set(OnUpdate(GameState::Playing)));
+    }
+}
 
 #[derive(Component)]
 pub struct Cannon {
     pub track: usize,
     pub heading: Vec2,
     pub size: usize,
+    forward: bool,
 }
 
 impl Cannon {
@@ -19,6 +25,7 @@ impl Cannon {
             track,
             heading,
             size,
+            forward: true,
         }
     }
 
@@ -29,6 +36,10 @@ impl Cannon {
         } else {
             Vec2::new(0., offset)
         }
+    }
+
+    fn horizontal(&self) -> bool {
+        self.heading.y.abs() > self.heading.x.abs()
     }
 }
 
@@ -88,4 +99,30 @@ pub fn spawn_cannon(
                 });
             }
         });
+}
+
+fn cannon_move_system(mut query: Query<(&mut Cannon, &mut WorldPosition)>) {
+    for (mut cannon, mut cannon_pos) in &mut query {
+        let delta = if cannon.forward { 1.0 } else { -1.0 };
+        let movement = if cannon.horizontal() {
+            Vec2::new(delta, 0.)
+        } else {
+            Vec2::new(0., delta)
+        };
+
+        cannon_pos.position += movement;
+        if cannon.horizontal() {
+            if cannon_pos.position.x < 32. {
+                cannon.forward = true;
+            } else if cannon_pos.position.x > (12. * 16.) {
+                cannon.forward = false;
+            }
+        } else {
+            if cannon_pos.position.y < 16. {
+                cannon.forward = true;
+            } else if cannon_pos.position.y > (5. * 16.) {
+                cannon.forward = false;
+            }
+        }
+    }
 }
