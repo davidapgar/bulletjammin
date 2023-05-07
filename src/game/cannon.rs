@@ -8,9 +8,9 @@ pub struct CannonPlugin;
 
 #[derive(Component)]
 pub struct Cannon {
-    track: usize,
-    heading: Vec2,
-    size: usize,
+    pub track: usize,
+    pub heading: Vec2,
+    pub size: usize,
 }
 
 impl Cannon {
@@ -21,15 +21,25 @@ impl Cannon {
             size,
         }
     }
+
+    pub fn spawn_offset(&self, note: i32) -> Vec2 {
+        let offset = note as f32 * 16.;
+        if self.heading.y.abs() > self.heading.x.abs() {
+            Vec2::new(offset, 0.)
+        } else {
+            Vec2::new(0., offset)
+        }
+    }
 }
 
 /// Spawn a single entity with `size` children as sprites for the cannons.
 pub fn spawn_cannon(
-    cannon: Cannon,
+    mut cannon: Cannon,
     commands: &mut Commands,
     position: Vec2,
     sprites: &Res<Sprites>,
 ) {
+    cannon.heading = cannon.heading.normalize();
     let n_cannon = cannon.size;
 
     let (sprite_index, flip_x, flip_y, vert) = {

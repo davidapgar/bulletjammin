@@ -137,28 +137,32 @@ fn world_startup(
 
     spawn_world_grid(&mut commands, sprites.floor.clone(), sprites.wall.clone());
 
+    // Left
     spawn_cannon(
         Cannon::new(12, 0, Vec2::new(1., 0.)),
         &mut commands,
         Vec2::new(16., 16.),
         &sprites,
     );
+    // Bottom
     spawn_cannon(
-        Cannon::new(12, 0, Vec2::new(0., 1.)),
+        Cannon::new(12, 1, Vec2::new(0., 1.)),
         &mut commands,
         Vec2::new(32., 16.),
         &sprites,
     );
+    // Right
     spawn_cannon(
-        Cannon::new(12, 0, Vec2::new(-1., 0.)),
+        Cannon::new(12, 2, Vec2::new(-1., 0.)),
         &mut commands,
         Vec2::new(24. * 16., 16.),
         &sprites,
     );
+    // Top
     spawn_cannon(
-        Cannon::new(12, 0, Vec2::new(0., -1.)),
+        Cannon::new(12, 3, Vec2::new(0., -1.)),
         &mut commands,
-        Vec2::new(32., 16. * 16.),
+        Vec2::new((24. - 12.) * 16., 16. * 16.),
         &sprites,
     );
 }
@@ -220,11 +224,20 @@ fn spawn_system(
     song: Res<Song>,
     time: Res<Time>,
     audio: Res<Audio>,
+    cannon_query: Query<(&Cannon, &WorldPosition)>,
 ) {
+    // TODO: Handle multiple banks of cannons
+    let (cannon, cannon_pos) = cannon_query.iter().find(|(c, _)| c.track == 0).unwrap();
+
     song_timer.timer.tick(time.delta());
 
     if song_timer.timer.just_finished() {
         if let Some((note, source)) = song.note(song_timer.idx) {
+            let (spawn_pos, heading) = (
+                cannon_pos.position + cannon.spawn_offset(note),
+                cannon.heading * 4.,
+            );
+
             commands.spawn((
                 SpriteSheetBundle {
                     texture_atlas: sprites.blast.clone(),
@@ -232,8 +245,8 @@ fn spawn_system(
                     ..default()
                 },
                 Bullet(BulletType::Enemy),
-                Moveable(Vec2::new(4., 0.)),
-                WorldPosition::new(Vec2::new(0., 16. * note as f32), 1.),
+                Moveable(heading),
+                WorldPosition::new(spawn_pos, 1.),
                 Animation::new(
                     vec![AnimationFrame::new(0, 0.250), AnimationFrame::new(1, 0.250)],
                     true,
