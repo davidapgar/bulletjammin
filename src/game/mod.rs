@@ -87,13 +87,21 @@ fn button_system(keyboard_input: Res<Input<KeyCode>>, audio: ResMut<Audio>) {
         audio.play(vca.as_raw());
         */
         //let osc = Attenuator::new(TriangleWave::new(frequency), 2.0);
+
+        /* Kick
         let frequency = frequency_per_volt(key as f32 / 120.0 + 0.0);
 
-        let kick_env = Envelope::new(2.0, 0.001, 0.1, 0.3);
+        let kick_env = Envelope::new(1.0, 0.001, 0.1, 0.3);
         let freq_env = Envelope::new(0.02, 0.0, 0.0, 0.2);
         let vco = Vco::new(TriangleWave::new(frequency), frequency, freq_env);
         let osc = Attenuator::new(vco, 2.0);
         let vca = Vca::new(osc, kick_env);
+        */
+
+        let snare_env = Envelope::new(0.5, 0.001, 0.0, 0.3);
+        let vco = NoiseLFSR::new(20000.);
+        let osc = vco;
+        let vca = Vca::new(osc, snare_env);
         audio.play(vca.as_raw());
     }
 }

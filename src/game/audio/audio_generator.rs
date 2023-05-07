@@ -347,6 +347,66 @@ impl Iterator for TriangleWave {
     }
 }
 
+/// Noise from LFSR, based on the gameboy noise channel
+/// 15 bit LFSR, sets 15 as bit 1 ^ bit 0 on shift
+/// Scaled to -0.5 to 0.5
+pub struct NoiseLFSR {
+    frequency: f32,
+    period: f32,
+    lfsr: u16,
+    last: u16,
+}
+
+impl GenSource for NoiseLFSR {}
+
+impl NoiseLFSR {
+    pub fn new(frequency: f32) -> Self {
+        Self {
+            frequency,
+            period: 0.,
+            lfsr: 1,
+            last: 1,
+        }
+    }
+
+    pub fn as_raw(self) -> RawSource {
+        RawSource::new(self)
+    }
+}
+
+impl Oscillator for NoiseLFSR {
+    fn set_frequency(&mut self, frequency: f32) {
+        self.frequency = frequency;
+    }
+}
+
+impl Iterator for NoiseLFSR {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let p_step = self.frequency / SAMPLE_RATE;
+
+        self.period += p_step;
+        if self.period > 1.0 {
+            self.period -= 1.0;
+            // Update LFSR state
+            let mut bit = self.lfsr & 0x01;
+            self.last = bit;
+
+            let mut lfsr = self.lfsr >> 1;
+            bit = bit ^ (lfsr & 0x01);
+            lfsr |= bit << 14;
+            self.lfsr = lfsr;
+        }
+
+        if self.last == 0 {
+            Some(-0.5)
+        } else {
+            Some(0.5)
+        }
+    }
+}
+
 pub struct SuperSaw {
     sub_oscillators: Vec<SawWave>,
 }
