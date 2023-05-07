@@ -122,7 +122,8 @@ impl Phrase {
             return None;
         }
 
-        if let Some(note) = match self.notes.as_bytes()[idx] as char {
+        let note_byte = self.notes.as_bytes()[idx];
+        if let Some(note) = match note_byte as char {
             'c' => Some(0),
             'd' => Some(2),
             'e' => Some(4),
@@ -135,6 +136,10 @@ impl Phrase {
             let voltage = note as f32 / 120.;
             let frequency = frequency_per_volt(voltage + 0.2);
             Some((note, (self.sound_gen)(frequency)))
+        } else if note_byte >= '0' as u8 && note_byte <= '9' as u8 {
+            let voltage = note_byte as f32 / 120.;
+            let frequency = frequency_per_volt(voltage);
+            Some((note_byte as i32, (self.sound_gen)(frequency)))
         } else {
             None
         }
