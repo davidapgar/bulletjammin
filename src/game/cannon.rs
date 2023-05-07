@@ -32,9 +32,17 @@ impl Cannon {
     pub fn spawn_offset(&self, note: i32) -> Vec2 {
         let offset = note as f32 * 16.;
         if self.heading.y.abs() > self.heading.x.abs() {
-            Vec2::new(offset, 0.)
+            if self.heading.y < 0. {
+                Vec2::new(self.size as f32 * 16. - offset, 0.)
+            } else {
+                Vec2::new(offset, 0.)
+            }
         } else {
-            Vec2::new(0., offset)
+            if self.heading.x < 0. {
+                Vec2::new(0., self.size as f32 * 16. - offset)
+            } else {
+                Vec2::new(0., offset)
+            }
         }
     }
 
