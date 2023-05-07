@@ -90,17 +90,39 @@ impl Facing {
 #[derive(PartialEq)]
 pub enum PlayerAnimations {
     Down,
+    DownShoot,
     Up,
+    UpShoot,
     Left,
+    LeftShoot,
     Right,
+    RightShoot,
 }
 
 impl AnimationMarker for PlayerAnimations {
     fn animation(&self) -> Animation {
-        Animation::new(
-            vec![AnimationFrame::new(0, 0.250), AnimationFrame::new(1, 0.250)],
-            true,
-        )
+        match self {
+            PlayerAnimations::Down => Animation::new(vec![AnimationFrame::new(0, 0.1)], true),
+            PlayerAnimations::DownShoot => Animation::new(
+                vec![AnimationFrame::new(0, 0.1), AnimationFrame::new(1, 0.1)],
+                true,
+            ),
+            PlayerAnimations::Up => Animation::new(vec![AnimationFrame::new(2, 0.1)], true),
+            PlayerAnimations::UpShoot => Animation::new(
+                vec![AnimationFrame::new(2, 0.1), AnimationFrame::new(3, 0.1)],
+                true,
+            ),
+            PlayerAnimations::Right => Animation::new(vec![AnimationFrame::new(4, 0.1)], true),
+            PlayerAnimations::RightShoot => Animation::new(
+                vec![AnimationFrame::new(4, 0.1), AnimationFrame::new(5, 0.1)],
+                true,
+            ),
+            PlayerAnimations::Left => Animation::new(vec![AnimationFrame::new(6, 0.1)], true),
+            PlayerAnimations::LeftShoot => Animation::new(
+                vec![AnimationFrame::new(6, 0.1), AnimationFrame::new(7, 0.1)],
+                true,
+            ),
+        }
     }
 }
 
@@ -177,21 +199,30 @@ fn player_shooting_system(
     sprites: Res<Sprites>,
     on_beat: Res<OnBeat>,
     windows: Query<&Window>,
-    mut player_query: Query<(&WorldPosition, &mut Player)>,
+    mut player_query: Query<(&WorldPosition, &mut Player, &mut Animated<PlayerAnimations>)>,
     mouse_button_input: Res<Input<MouseButton>>,
 ) {
     let window = windows.single();
-    let (p_pos, mut player) = player_query.single_mut();
+    let (p_pos, mut player, mut animated) = player_query.single_mut();
     player.cooldown.tick(time.delta());
 
     let Some(cursor_position) = window.cursor_position() else {
         return;
     };
 
+    let heading = (cursor_position - p_pos.position * 2.).normalize_or_zero();
+    player.facing = Facing::from(heading);
+
     if mouse_button_input.pressed(MouseButton::Left) {
         if player.cooldown.finished() && on_beat.0 {
-            let heading = (cursor_position - p_pos.position * 2.).normalize_or_zero();
-            player.facing = Facing::from(heading);
+            let animation = match player.facing {
+                Facing::Down => PlayerAnimations::DownShoot,
+                Facing::Up => PlayerAnimations::UpShoot,
+                Facing::Right => PlayerAnimations::RightShoot,
+                Facing::Left => PlayerAnimations::LeftShoot,
+            };
+            animated.set_animation(animation);
+
             commands.spawn((
                 SpriteSheetBundle {
                     texture_atlas: sprites.shot.clone(),
@@ -208,6 +239,14 @@ fn player_shooting_system(
             ));
             player.cooldown = Timer::from_seconds(0.1, TimerMode::Once);
         }
+    } else {
+        let animation = match player.facing {
+            Facing::Down => PlayerAnimations::Down,
+            Facing::Up => PlayerAnimations::Up,
+            Facing::Right => PlayerAnimations::Right,
+            Facing::Left => PlayerAnimations::Left,
+        };
+        animated.set_animation(animation);
     }
 }
 
@@ -256,7 +295,6 @@ fn player_animation_system(
     )>,
 ) {
     for (_player, mut animated, mut sprite) in &mut player_query {
-        animated.set_animation(PlayerAnimations::Down);
         if animated.tick(time.delta()) {
             if let Some(frame) = animated.next_frame() {
                 sprite.index = frame.idx;

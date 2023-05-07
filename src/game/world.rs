@@ -2,7 +2,7 @@ use super::animation::{Animated, Animation, AnimationFrame};
 use super::assets::Sprites;
 use super::audio::Audio;
 use super::cannon::{spawn_cannon, Cannon};
-use super::enemy::Enemy;
+use super::enemy::{Enemy, EnemyAnimations};
 use super::player::{OnBeat, Player, PlayerAnimations};
 use super::song::{mary_song, Song};
 use super::GameState;
@@ -104,12 +104,6 @@ fn world_startup(
         Animated::<PlayerAnimations>::default(),
     ));
 
-    let enemy_frames = vec![
-        AnimationFrame::new(0, 0.250),
-        AnimationFrame::new(1, 0.250),
-        AnimationFrame::new(0, 0.250),
-        AnimationFrame::new(2, 0.250),
-    ];
     commands.spawn((
         SpriteSheetBundle {
             texture_atlas: sprites.sheep.clone(),
@@ -118,24 +112,18 @@ fn world_startup(
         },
         Enemy::default(),
         WorldPosition::new(Vec2::new(8. * 16., 8. * 16.), 1.),
-        Animation::new(enemy_frames, true),
+        Animated::<EnemyAnimations>::default(),
     ));
 
-    let boss_frames = vec![
-        AnimationFrame::new(0, 0.250),
-        AnimationFrame::new(1, 0.150),
-        AnimationFrame::new(0, 0.250),
-        AnimationFrame::new(2, 0.150),
-    ];
     commands.spawn((
         SpriteSheetBundle {
             texture_atlas: sprites.ram.clone(),
             sprite: TextureAtlasSprite::new(0),
             ..default()
         },
-        Enemy::default(),
+        Enemy::boss(),
         WorldPosition::new(Vec2::new(12. * 16., 12. * 16.), 1.),
-        Animation::new(boss_frames, true),
+        Animated::<EnemyAnimations>::default(),
     ));
 
     spawn_world_grid(&mut commands, sprites.floor.clone(), sprites.wall.clone());

@@ -1,3 +1,4 @@
+use super::animation::{Animated, Animation, AnimationFrame, AnimationMarker};
 use super::player::Player;
 use super::world::{Bullet, BulletType, Wall, WorldPosition};
 use super::GameState;
@@ -10,9 +11,19 @@ pub struct EnemyPlugin;
 impl bevy::app::Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            (enemy_movement_system, enemy_bullet_system).in_set(OnUpdate(GameState::Playing)),
+            (
+                enemy_movement_system,
+                enemy_bullet_system,
+                enemy_animation_system,
+            )
+                .in_set(OnUpdate(GameState::Playing)),
         );
     }
+}
+
+enum EnemyType {
+    Basic,
+    Boss,
 }
 
 #[derive(Component)]
@@ -20,6 +31,18 @@ pub struct Enemy {
     heading: Vec2,
     timer: Timer,
     health: i32,
+    enemy_type: EnemyType,
+}
+
+impl Enemy {
+    pub fn boss() -> Self {
+        Self {
+            heading: Vec2::default(),
+            timer: Timer::default(),
+            health: 32,
+            enemy_type: EnemyType::Boss,
+        }
+    }
 }
 
 impl Default for Enemy {
@@ -28,23 +51,89 @@ impl Default for Enemy {
             heading: Vec2::default(),
             timer: Timer::new(bevy::utils::Duration::from_nanos(1), TimerMode::Once),
             health: 8,
+            enemy_type: EnemyType::Basic,
+        }
+    }
+}
+
+/// Composite type for both types of enemies. Really should only use the right animations for each.
+#[derive(PartialEq)]
+pub enum EnemyAnimations {
+    SheepWalk,
+    SheepHurt,
+    RamWalk,
+    RamHurt,
+}
+
+impl AnimationMarker for EnemyAnimations {
+    fn animation(&self) -> Animation {
+        match self {
+            EnemyAnimations::SheepWalk => Animation::new(
+                vec![
+                    AnimationFrame::new(0, 0.125),
+                    AnimationFrame::new(1, 0.125),
+                    AnimationFrame::new(0, 0.125),
+                    AnimationFrame::new(2, 0.125),
+                ],
+                true,
+            ),
+            EnemyAnimations::SheepHurt => Animation::new(
+                vec![
+                    AnimationFrame::new(0, 0.0625),
+                    AnimationFrame::new(3, 0.0625),
+                    AnimationFrame::new(0, 0.0625),
+                    AnimationFrame::new(3, 0.0625),
+                    AnimationFrame::new(0, 0.0625),
+                    AnimationFrame::new(3, 0.0625),
+                ],
+                false,
+            ),
+            EnemyAnimations::RamWalk => Animation::new(
+                vec![AnimationFrame::new(0, 0.250), AnimationFrame::new(2, 0.125)],
+                true,
+            ),
+            EnemyAnimations::RamHurt => Animation::new(
+                vec![
+                    AnimationFrame::new(0, 0.0625),
+                    AnimationFrame::new(1, 0.0625),
+                    AnimationFrame::new(2, 0.0625),
+                    AnimationFrame::new(3, 0.0625),
+                    AnimationFrame::new(0, 0.0625),
+                    AnimationFrame::new(1, 0.0625),
+                    AnimationFrame::new(2, 0.0625),
+                    AnimationFrame::new(3, 0.0625),
+                ],
+                false,
+            ),
         }
     }
 }
 
 fn enemy_movement_system(
     time: Res<Time>,
-    mut query: Query<(&mut WorldPosition, &mut Enemy), (With<Enemy>, Without<Wall>)>,
+    mut query: Query<
+        (
+            &mut WorldPosition,
+            &mut Enemy,
+            &mut Animated<EnemyAnimations>,
+        ),
+        (With<Enemy>, Without<Wall>),
+    >,
     wall_query: Query<&WorldPosition, (With<Wall>, Without<Enemy>)>,
 ) {
     let mut rng = rand::thread_rng();
     let wall_size = Vec2::new(16., 16.);
     let enemy_size = Vec2::new(16., 12.);
 
-    for (mut e_pos, mut enemy) in &mut query {
+    for (mut e_pos, mut enemy, mut animated) in &mut query {
         enemy.timer.tick(time.delta());
 
-        if enemy.timer.just_finished() {
+        if enemy.timer.finished() {
+            match enemy.enemy_type {
+                EnemyType::Basic => animated.set_animation(EnemyAnimations::SheepWalk),
+                EnemyType::Boss => animated.set_animation(EnemyAnimations::RamWalk),
+            }
+
             let movement = Vec2::new(rng.gen_range(-2.0..2.0), rng.gen_range(-2.0..2.0));
             enemy.heading = movement.normalize();
 
@@ -73,13 +162,21 @@ fn enemy_movement_system(
 
 fn enemy_bullet_system(
     mut commands: Commands,
-    mut enemy_query: Query<(Entity, &WorldPosition, &mut Enemy), Without<Bullet>>,
+    mut enemy_query: Query<
+        (
+            Entity,
+            &WorldPosition,
+            &mut Enemy,
+            &mut Animated<EnemyAnimations>,
+        ),
+        Without<Bullet>,
+    >,
     bullet_query: Query<(Entity, &WorldPosition, &Bullet), Without<Player>>,
 ) {
     let bullet_size = Vec2::new(4., 4.);
     let enemy_size = Vec2::new(16., 12.);
 
-    for (enemy_entity, enemy_position, mut enemy) in &mut enemy_query {
+    for (enemy_entity, enemy_position, mut enemy, mut animated) in &mut enemy_query {
         let enemy_pos = enemy_position.position.extend(0.);
 
         let filtered = bullet_query
@@ -95,12 +192,29 @@ fn enemy_bullet_system(
                 bullet_pos.position.extend(0.),
                 bullet_size,
             ) {
+                animated.push_animation(match enemy.enemy_type {
+                    EnemyType::Basic => EnemyAnimations::SheepHurt,
+                    EnemyType::Boss => EnemyAnimations::RamHurt,
+                });
                 enemy.health -= 1;
                 commands.entity(entity).despawn();
             }
         }
         if enemy.health <= 0 {
             commands.entity(enemy_entity).despawn();
+        }
+    }
+}
+
+fn enemy_animation_system(
+    time: Res<Time>,
+    mut enemy_query: Query<(&mut Animated<EnemyAnimations>, &mut TextureAtlasSprite)>,
+) {
+    for (mut animated, mut sprite) in &mut enemy_query {
+        if animated.tick(time.delta()) {
+            if let Some(frame) = animated.next_frame() {
+                sprite.index = frame.idx;
+            }
         }
     }
 }

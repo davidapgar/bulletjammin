@@ -54,7 +54,7 @@ fn load_assets(
     sprites.sheep = texture_atlases.add(TextureAtlas::from_grid(
         asset_server.load("sprites/sheep.png"),
         Vec2::new(16.0, 16.0),
-        3,
+        4,
         1,
         None,
         None,
