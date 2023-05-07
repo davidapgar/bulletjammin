@@ -86,8 +86,31 @@ impl Chain {
     }
 }
 
+pub enum PhraseType {
+    Quarter,
+    Eigth,
+    Sixteenth,
+}
+
+impl PhraseType {
+    fn mult(&self) -> usize {
+        match self {
+            PhraseType::Quarter => 4,
+            PhraseType::Eigth => 2,
+            PhraseType::Sixteenth => 1,
+        }
+    }
+
+    /// `true` if this index is represented in this phrase type
+    /// eg: In `Quarter`, only idx % 4 == 0 on "in_phrase"
+    fn in_phrase(&self, idx: usize) -> bool {
+        idx % self.mult() == 0
+    }
+}
+
 pub struct Phrase {
     notes: &'static str,
+    phrase_type: PhraseType,
     sound_gen: Box<dyn Fn(f32) -> RawSource + Sync + Send + 'static>,
 }
 
@@ -95,6 +118,7 @@ impl Phrase {
     fn new(notes: &'static str) -> Self {
         Self {
             notes,
+            phrase_type: PhraseType::Eigth,
             sound_gen: Box::new(|frequency| {
                 Vca::new(
                     Vco::new(
@@ -114,10 +138,15 @@ impl Phrase {
     }
 
     fn len(&self) -> usize {
-        self.notes.len()
+        self.notes.len() * self.phrase_type.mult()
     }
 
-    fn note(&self, idx: usize) -> Option<(i32, RawSource)> {
+    fn note(&self, mut idx: usize) -> Option<(i32, RawSource)> {
+        if !self.phrase_type.in_phrase(idx) {
+            return None;
+        }
+
+        idx = idx / self.phrase_type.mult();
         if idx > self.notes.len() {
             return None;
         }

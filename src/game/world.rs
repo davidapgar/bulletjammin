@@ -27,6 +27,9 @@ impl bevy::app::Plugin for WorldPlugin {
     }
 }
 
+// 120 BPM, 60 seconds/min, 4/beat (16th notes)
+const BPM_TIMER_TIME: f32 = 0.125;
+
 #[derive(Resource)]
 struct SongTimer {
     timer: Timer,
@@ -36,7 +39,7 @@ struct SongTimer {
 impl Default for SongTimer {
     fn default() -> Self {
         SongTimer {
-            timer: Timer::from_seconds(0.125, TimerMode::Once),
+            timer: Timer::default(),
             idx: 0,
         }
     }
@@ -270,7 +273,7 @@ fn spawn_system(
             song_timer.idx = 0;
         }
 
-        song_timer.timer = Timer::from_seconds(0.25, TimerMode::Once);
+        song_timer.timer = Timer::from_seconds(BPM_TIMER_TIME, TimerMode::Once);
     }
 }
 
