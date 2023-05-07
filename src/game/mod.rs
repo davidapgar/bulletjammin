@@ -21,6 +21,7 @@ pub enum GameState {
     #[default]
     Menu,
     Playing,
+    GameOver,
 }
 
 impl bevy::app::Plugin for Plugin {

@@ -8,7 +8,8 @@ impl Plugin for MenuPlugin {
         app.init_resource::<ButtonColors>()
             .add_system(setup_menu.in_schedule(OnEnter(GameState::Menu)))
             .add_system(click_play_button.in_set(OnUpdate(GameState::Menu)))
-            .add_system(cleanup_menu.in_schedule(OnExit(GameState::Menu)));
+            .add_system(cleanup_menu.in_schedule(OnExit(GameState::Menu)))
+            .add_system(game_over.in_schedule(OnEnter(GameState::GameOver)));
     }
 }
 
@@ -111,4 +112,29 @@ fn cleanup_menu(mut commands: Commands, button_query: Query<Entity, With<MenuCon
     for button in &button_query {
         commands.entity(button).despawn_recursive();
     }
+}
+
+fn game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = asset_server.load("fonts/NotJamSlabSerif1.ttf");
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                margin: UiRect::all(Val::Auto),
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            parent.spawn(TextBundle::from_section(
+                "GAME OVER!",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 60.0,
+                    color: Color::rgb(0.9, 0.9, 0.9),
+                },
+            ));
+        });
 }

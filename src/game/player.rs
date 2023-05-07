@@ -213,6 +213,7 @@ fn player_bullet_system(
     mut commands: Commands,
     mut player_query: Query<(&WorldPosition, &mut Player), Without<Bullet>>,
     bullet_query: Query<(Entity, &WorldPosition, &Bullet), (With<Bullet>, Without<Player>)>,
+    mut state: ResMut<NextState<GameState>>,
 ) {
     let bullet_size = Vec2::new(8., 8.);
     for (player_position, mut player) in &mut player_query {
@@ -235,6 +236,10 @@ fn player_bullet_system(
             ) {
                 player.health -= 1;
                 commands.entity(entity).despawn();
+
+                if player.health <= 0 {
+                    state.set(GameState::GameOver);
+                }
             }
         }
     }
