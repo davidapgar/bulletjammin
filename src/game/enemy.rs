@@ -49,7 +49,7 @@ impl Default for Enemy {
     fn default() -> Self {
         Self {
             heading: Vec2::default(),
-            timer: Timer::new(bevy::utils::Duration::from_nanos(1), TimerMode::Once),
+            timer: Timer::default(),
             health: 8,
             enemy_type: EnemyType::Basic,
         }

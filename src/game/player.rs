@@ -232,10 +232,6 @@ fn player_shooting_system(
                 Bullet(BulletType::Player),
                 Moveable(heading * 4.0),
                 WorldPosition::new(p_pos.position, 1.),
-                Animation::new(
-                    vec![AnimationFrame::new(0, 0.250), AnimationFrame::new(1, 0.250)],
-                    true,
-                ),
             ));
             player.cooldown = Timer::from_seconds(0.1, TimerMode::Once);
         }

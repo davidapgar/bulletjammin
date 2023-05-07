@@ -1,4 +1,4 @@
-use super::animation::{Animated, Animation, AnimationFrame};
+use super::animation::{Animated, AnimationFrame};
 use super::assets::Sprites;
 use super::audio::Audio;
 use super::cannon::{spawn_cannon, Cannon};
@@ -243,10 +243,6 @@ fn spawn_system(
                         Bullet(BulletType::Enemy),
                         Moveable(heading),
                         WorldPosition::new(spawn_pos, 1.),
-                        Animation::new(
-                            vec![AnimationFrame::new(0, 0.250), AnimationFrame::new(1, 0.250)],
-                            true,
-                        ),
                     ));
                 }
                 audio.play(source);

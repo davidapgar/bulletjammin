@@ -98,7 +98,6 @@ impl AnimationFrame {
     }
 }
 
-#[derive(Component)]
 pub struct Animation {
     frames: Vec<AnimationFrame>,
     repeat: bool,
@@ -116,7 +115,7 @@ impl Animation {
 
             frame: 0,
             running: true,
-            timer: Timer::new(bevy::utils::Duration::from_nanos(1), TimerMode::Once),
+            timer: Timer::default(),
         }
     }
 
@@ -163,20 +162,3 @@ fn animated_system(time: Res<Time>, mut query: Query<(&mut Animated, &mut Textur
     }
 }
 */
-fn animation_system(time: Res<Time>, mut query: Query<(&mut Animation, &mut TextureAtlasSprite)>) {
-    for (mut animation, mut sprite) in &mut query {
-        if !animation.running {
-            continue;
-        }
-
-        animation.timer.tick(time.delta());
-
-        if !animation.timer.just_finished() {
-            continue;
-        }
-
-        if let Some(frame) = animation.next_frame() {
-            sprite.index = frame.idx;
-        }
-    }
-}
