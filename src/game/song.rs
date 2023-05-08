@@ -4,6 +4,8 @@ use bevy::prelude::*;
 
 pub type Notes = [Option<(i32, RawSource)>; 4];
 
+// TODO: allow offset to eigth/quarter?
+
 #[derive(Resource)]
 pub struct Song {
     tracks: Vec<Track>,
@@ -244,9 +246,14 @@ pub fn mary_song() -> Song {
             },
             // drums
             Track {
-                chains: vec![Chain {
-                    phrases: vec![Phrase::sixteenth("009_90_0_0_0009_", drum)],
-                }],
+                chains: vec![
+                    Chain {
+                        phrases: vec![Phrase::sixteenth("009_90_0_0_0009_", drum)],
+                    },
+                    Chain {
+                        phrases: vec![Phrase::quarter("1234", drum), Phrase::quarter("4321", drum)],
+                    },
+                ],
             },
         ],
     }

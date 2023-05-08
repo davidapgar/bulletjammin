@@ -36,6 +36,8 @@ const BPM_TIMER_TIME: f32 = 0.125;
 struct SongTimer {
     timer: Timer,
     idx: usize,
+    chain: usize,
+    next_chain: bool,
 }
 
 impl Default for SongTimer {
@@ -43,6 +45,8 @@ impl Default for SongTimer {
         SongTimer {
             timer: Timer::default(),
             idx: 0,
+            chain: 0,
+            next_chain: false,
         }
     }
 }
@@ -236,7 +240,11 @@ fn spawn_system(
     if song_timer.timer.finished() {
         on_beat.0 = false;
 
-        for (idx, maybe_note) in song.note(song_timer.idx, 0).into_iter().enumerate() {
+        for (idx, maybe_note) in song
+            .note(song_timer.idx, song_timer.chain)
+            .into_iter()
+            .enumerate()
+        {
             if let Some((note, source)) = maybe_note {
                 if idx == 0 {
                     on_beat.0 = true;
@@ -263,8 +271,12 @@ fn spawn_system(
         }
 
         song_timer.idx += 1;
-        if song_timer.idx >= song.len(0) {
+        if song_timer.idx >= song.len(song_timer.chain) {
             song_timer.idx = 0;
+            if song_timer.next_chain {
+                song_timer.chain += 1;
+                song_timer.next_chain = false;
+            }
         }
 
         song_timer.timer = Timer::from_seconds(BPM_TIMER_TIME, TimerMode::Once);
