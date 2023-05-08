@@ -244,17 +244,6 @@ fn drum(frequency: f32) -> RawSource {
 pub fn mary_song() -> Song {
     Song {
         tracks: vec![
-            // melody
-            Track {
-                chains: vec![Chain {
-                    phrases: vec![
-                        Phrase::eigth("edcdeee_", square_horn),
-                        Phrase::eigth("ddd_cgg_", square_horn),
-                        Phrase::eigth("edcdeee_", square_horn),
-                        Phrase::eigth("ddedc___", square_horn),
-                    ],
-                }],
-            },
             // drums
             Track {
                 chains: vec![
@@ -265,6 +254,17 @@ pub fn mary_song() -> Song {
                         phrases: vec![Phrase::quarter("1234", drum), Phrase::quarter("4321", drum)],
                     },
                 ],
+            },
+            // melody
+            Track {
+                chains: vec![Chain {
+                    phrases: vec![
+                        Phrase::eigth("edcdeee_", square_horn),
+                        Phrase::eigth("ddd_cgg_", square_horn),
+                        Phrase::eigth("edcdeee_", square_horn),
+                        Phrase::eigth("ddedc___", square_horn),
+                    ],
+                }],
             },
         ],
     }

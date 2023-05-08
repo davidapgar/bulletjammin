@@ -81,6 +81,7 @@ pub struct World {
     next_spawn: Timer,
     enemy_spawned: usize,
     active_enemy: usize,
+    enemy_killed: usize,
 }
 
 impl World {
@@ -141,28 +142,28 @@ fn world_startup(
 
     // Left
     spawn_cannon(
-        Cannon::new(12, 0, Vec2::new(1., 0.)),
+        Cannon::new(12, 1, Vec2::new(1., 0.)),
         &mut commands,
         Vec2::new(16., 16.),
         &sprites,
     );
     // Bottom
     spawn_cannon(
-        Cannon::new(12, 1, Vec2::new(0., 1.)),
+        Cannon::new(12, 0, Vec2::new(0., 1.)),
         &mut commands,
         Vec2::new(32., 16.),
         &sprites,
     );
     // Right
     spawn_cannon(
-        Cannon::new(12, 0, Vec2::new(-1., 0.)),
+        Cannon::new(12, 1, Vec2::new(-1., 0.)),
         &mut commands,
         Vec2::new(24. * 16., 16.),
         &sprites,
     );
     // Top
     spawn_cannon(
-        Cannon::new(12, 1, Vec2::new(0., -1.)),
+        Cannon::new(12, 0, Vec2::new(0., -1.)),
         &mut commands,
         Vec2::new((24. - 12.) * 16., 16. * 16.),
         &sprites,
@@ -181,6 +182,7 @@ fn spawn_world_grid(
         next_spawn: Timer::from_seconds(1.0, TimerMode::Once),
         enemy_spawned: 2,
         active_enemy: 2,
+        enemy_killed: 0,
     });
 
     for x in [0, w] {
@@ -223,6 +225,7 @@ fn spawn_world_grid(
 }
 
 fn song_progression_system(
+    mut song_timer: ResMut<SongTimer>,
     mut event_reader: EventReader<EnemyKilledEvent>,
     mut world_query: Query<&mut World>,
 ) {
@@ -230,6 +233,12 @@ fn song_progression_system(
 
     for _enemy_type in event_reader.iter() {
         world.active_enemy -= 1;
+        world.enemy_killed += 1;
+
+        let killed = world.enemy_killed;
+        if killed % 2 == 0 {
+            song_timer.next_chain = true;
+        }
     }
 }
 
@@ -240,6 +249,7 @@ fn spawn_system(
     song: Res<Song>,
     time: Res<Time>,
     audio: Res<Audio>,
+    mut state: ResMut<NextState<GameState>>,
     mut on_beat: ResMut<OnBeat>,
     cannon_query: Query<(&Cannon, &WorldPosition)>,
 ) {
@@ -284,6 +294,10 @@ fn spawn_system(
             if song_timer.next_chain {
                 song_timer.chain += 1;
                 song_timer.next_chain = false;
+
+                if song_timer.chain >= song.max_chains() {
+                    state.set(GameState::Winner);
+                }
             }
         }
 
