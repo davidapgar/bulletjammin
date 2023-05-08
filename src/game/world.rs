@@ -14,7 +14,7 @@ pub struct WorldPlugin;
 impl bevy::app::Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Sprites::default())
-            .insert_resource(mary_song())
+            //.insert_resource(mary_song())
             //.insert_resource(techno())
             .insert_resource(SongTimer::default())
             .add_event::<EnemyKilledEvent>()

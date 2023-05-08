@@ -1,5 +1,6 @@
 use super::audio::audio_generator::*;
 use super::audio::Audio;
+use super::song::{mary_song, techno};
 use super::GameState;
 use bevy::prelude::*;
 
@@ -33,6 +34,11 @@ impl Default for ButtonColors {
 
 #[derive(Component)]
 struct MenuContainer;
+#[derive(Component)]
+enum WhichButton {
+    Mary,
+    Techno,
+}
 
 fn setup_menu(
     mut commands: Commands,
@@ -64,28 +70,59 @@ fn setup_menu(
                     color: Color::rgb(0.9, 0.9, 0.9),
                 },
             ));
+
             parent
-                .spawn(ButtonBundle {
-                    style: Style {
-                        size: Size::new(Val::Px(120.0), Val::Px(50.0)),
-                        margin: UiRect::all(Val::Auto),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            size: Size::new(Val::Px(240.0), Val::Px(50.0)),
+                            margin: UiRect::all(Val::Auto),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        background_color: button_colors.normal.into(),
                         ..default()
                     },
-                    background_color: button_colors.normal.into(),
-                    ..default()
-                })
+                    WhichButton::Mary,
+                ))
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section(
-                        "Play",
+                        "Mary's Jam",
                         TextStyle {
                             font: font.clone(),
-                            font_size: 40.0,
+                            font_size: 20.0,
                             color: Color::rgb(0.9, 0.9, 0.9),
                         },
                     ));
                 });
+
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            size: Size::new(Val::Px(240.0), Val::Px(50.0)),
+                            margin: UiRect::all(Val::Auto),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        background_color: button_colors.normal.into(),
+                        ..default()
+                    },
+                    WhichButton::Techno,
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "What even is this?",
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: 20.0,
+                            color: Color::rgb(0.9, 0.9, 0.9),
+                        },
+                    ));
+                });
+
             parent.spawn(TextBundle::from_section(
                 "WASD or Arrows to move, left-click to shoot on the beat",
                 TextStyle {
@@ -98,16 +135,21 @@ fn setup_menu(
 }
 
 fn click_play_button(
+    mut commands: Commands,
     button_colors: Res<ButtonColors>,
     mut state: ResMut<NextState<GameState>>,
     mut interation_query: Query<
-        (&Interaction, &mut BackgroundColor),
+        (&Interaction, &mut BackgroundColor, &WhichButton),
         (Changed<Interaction>, With<Button>),
     >,
 ) {
-    for (interaction, mut color) in &mut interation_query {
+    for (interaction, mut color, which) in &mut interation_query {
         match *interaction {
             Interaction::Clicked => {
+                match which {
+                    WhichButton::Mary => commands.insert_resource(mary_song()),
+                    WhichButton::Techno => commands.insert_resource(techno()),
+                }
                 state.set(GameState::Playing);
             }
             Interaction::Hovered => {
