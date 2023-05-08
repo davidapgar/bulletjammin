@@ -45,6 +45,7 @@ fn setup_menu(
                     flex_direction: FlexDirection::Column,
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    gap: Size::new(Val::Px(0.), Val::Px(16.0)),
                     ..default()
                 },
                 ..default()
@@ -82,6 +83,14 @@ fn setup_menu(
                         },
                     ));
                 });
+            parent.spawn(TextBundle::from_section(
+                "WASD or Arrows to move, left-click to shoot on the beat",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 12.0,
+                    color: Color::rgb(0.9, 0.9, 0.9),
+                },
+            ));
         });
 }
 
