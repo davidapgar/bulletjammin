@@ -30,7 +30,7 @@ fn load_assets(
     sprites.player = texture_atlases.add(TextureAtlas::from_grid(
         asset_server.load("sprites/player.png"),
         Vec2::new(16.0, 16.0),
-        8,
+        9,
         1,
         None,
         None,

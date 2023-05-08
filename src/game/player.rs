@@ -97,6 +97,7 @@ pub enum PlayerAnimations {
     LeftShoot,
     Right,
     RightShoot,
+    Hurt,
 }
 
 impl AnimationMarker for PlayerAnimations {
@@ -121,6 +122,17 @@ impl AnimationMarker for PlayerAnimations {
             PlayerAnimations::LeftShoot => Animation::new(
                 vec![AnimationFrame::new(6, 0.1), AnimationFrame::new(7, 0.1)],
                 true,
+            ),
+            PlayerAnimations::Hurt => Animation::new(
+                vec![
+                    AnimationFrame::new(0, 0.1),
+                    AnimationFrame::new(8, 0.1),
+                    AnimationFrame::new(0, 0.1),
+                    AnimationFrame::new(8, 0.1),
+                    AnimationFrame::new(0, 0.1),
+                    AnimationFrame::new(8, 0.1),
+                ],
+                false,
             ),
         }
     }
@@ -249,12 +261,15 @@ fn player_shooting_system(
 
 fn player_bullet_system(
     mut commands: Commands,
-    mut player_query: Query<(&WorldPosition, &mut Player), Without<Bullet>>,
+    mut player_query: Query<
+        (&WorldPosition, &mut Player, &mut Animated<PlayerAnimations>),
+        Without<Bullet>,
+    >,
     bullet_query: Query<(Entity, &WorldPosition, &Bullet), (With<Bullet>, Without<Player>)>,
     mut state: ResMut<NextState<GameState>>,
 ) {
     let bullet_size = Vec2::new(8., 8.);
-    for (player_position, mut player) in &mut player_query {
+    for (player_position, mut player, mut animated) in &mut player_query {
         let player_pos = player_position.position.extend(0.);
         let player_size = Vec2::new(16., 16.);
 
@@ -273,6 +288,7 @@ fn player_bullet_system(
                 bullet_size,
             ) {
                 player.health -= 1;
+                animated.push_animation(PlayerAnimations::Hurt);
                 commands.entity(entity).despawn();
 
                 if player.health <= 0 {
