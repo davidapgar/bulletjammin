@@ -22,6 +22,7 @@ pub enum GameState {
     Menu,
     Playing,
     GameOver,
+    Winner,
 }
 
 impl bevy::app::Plugin for Plugin {

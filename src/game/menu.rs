@@ -1,3 +1,5 @@
+use super::audio::audio_generator::*;
+use super::audio::Audio;
 use super::GameState;
 use bevy::prelude::*;
 
@@ -9,7 +11,8 @@ impl Plugin for MenuPlugin {
             .add_system(setup_menu.in_schedule(OnEnter(GameState::Menu)))
             .add_system(click_play_button.in_set(OnUpdate(GameState::Menu)))
             .add_system(cleanup_menu.in_schedule(OnExit(GameState::Menu)))
-            .add_system(game_over.in_schedule(OnEnter(GameState::GameOver)));
+            .add_system(game_over.in_schedule(OnEnter(GameState::GameOver)))
+            .add_system(winner.in_schedule(OnEnter(GameState::Winner)));
     }
 }
 
@@ -146,4 +149,39 @@ fn game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
             ));
         });
+}
+
+fn winner(mut commands: Commands, asset_server: Res<AssetServer>, audio: ResMut<Audio>) {
+    let font = asset_server.load("fonts/NotJamSlabSerif1.ttf");
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                margin: UiRect::all(Val::Auto),
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            parent.spawn(TextBundle::from_section(
+                "YOU WIN!",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 60.0,
+                    color: Color::rgb(0.9, 0.9, 0.9),
+                },
+            ));
+        });
+
+    let vco = Vco::from_oscillator(SuperSaw::new(1.), 130.81);
+    let vca = Vca::new(vco, Envelope::new(0.2, 0.1, 0.2, 1.0));
+    audio.play(vca.as_raw());
+    let vco = Vco::from_oscillator(SuperSaw::new(1.), 196.00);
+    let vca = Vca::new(vco, Envelope::new(0.2, 0.1, 0.2, 1.0));
+    audio.play(vca.as_raw());
+    let vco = Vco::from_oscillator(SuperSaw::new(1.), 261.63);
+    let vca = Vca::new(vco, Envelope::new(0.2, 0.1, 0.2, 1.0));
+    audio.play(vca.as_raw());
 }

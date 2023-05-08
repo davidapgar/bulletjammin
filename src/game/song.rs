@@ -34,6 +34,17 @@ impl Song {
         }
         max
     }
+
+    pub fn max_chains(&self) -> usize {
+        let mut max = 0;
+        for track in &self.tracks {
+            let len = track.chains.len();
+            if len > max {
+                max = len;
+            }
+        }
+        max
+    }
 }
 
 pub struct Track {
