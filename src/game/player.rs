@@ -1,5 +1,6 @@
 use super::animation::{Animated, Animation, AnimationFrame, AnimationMarker};
 use super::assets::Sprites;
+use super::audio::{audio_generator::*, Audio};
 use super::world::{Bullet, BulletType, Moveable, Wall, WorldPosition};
 use super::GameState;
 use bevy::prelude::*;
@@ -267,6 +268,7 @@ fn player_bullet_system(
     >,
     bullet_query: Query<(Entity, &WorldPosition, &Bullet), (With<Bullet>, Without<Player>)>,
     mut state: ResMut<NextState<GameState>>,
+    audio: Res<Audio>,
 ) {
     let bullet_size = Vec2::new(8., 8.);
     for (player_position, mut player, mut animated) in &mut player_query {
@@ -290,6 +292,10 @@ fn player_bullet_system(
                 player.health -= 1;
                 animated.push_animation(PlayerAnimations::Hurt);
                 commands.entity(entity).despawn();
+
+                let vco = Vco::new(RampWave::new(440.), 440., SawWave::new(20.));
+                let vca = Vca::new(vco, Envelope::new(0.2, 0.1, 0.0, 0.1));
+                audio.play(vca.as_raw());
 
                 if player.health <= 0 {
                     state.set(GameState::GameOver);

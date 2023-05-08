@@ -1,4 +1,6 @@
 use super::animation::{Animated, Animation, AnimationFrame, AnimationMarker};
+use super::audio::audio_generator::*;
+use super::audio::Audio;
 use super::player::Player;
 use super::world::{Bullet, BulletType, Wall, WorldPosition};
 use super::GameState;
@@ -176,6 +178,7 @@ fn enemy_bullet_system(
     >,
     bullet_query: Query<(Entity, &WorldPosition, &Bullet), Without<Player>>,
     mut event_writer: EventWriter<EnemyKilledEvent>,
+    audio: Res<Audio>,
 ) {
     let bullet_size = Vec2::new(4., 4.);
     let enemy_size = Vec2::new(16., 12.);
@@ -202,6 +205,10 @@ fn enemy_bullet_system(
                 });
                 enemy.health -= 1;
                 commands.entity(entity).despawn();
+
+                let vco = Vco::new(RampWave::new(440.), 440., RampWave::new(20.));
+                let vca = Vca::new(vco, Envelope::new(0.1, 0.1, 0.0, 0.1));
+                audio.play(vca.as_raw());
             }
         }
         if enemy.health <= 0 {
