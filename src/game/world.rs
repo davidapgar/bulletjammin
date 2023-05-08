@@ -7,6 +7,7 @@ use super::player::{OnBeat, Player, PlayerAnimations};
 use super::song::{mary_song, Song};
 use super::GameState;
 use bevy::prelude::*;
+use rand::prelude::*;
 
 pub struct WorldPlugin;
 
@@ -21,6 +22,7 @@ impl bevy::app::Plugin for WorldPlugin {
                 (
                     spawn_system,
                     move_system,
+                    enemy_spawn_system,
                     song_progression_system,
                     transform_world_system.after(spawn_system),
                 )
@@ -76,6 +78,9 @@ pub struct WorldPosition {
 #[derive(Component)]
 pub struct World {
     pub size: Vec2,
+    next_spawn: Timer,
+    enemy_spawned: usize,
+    active_enemy: usize,
 }
 
 impl World {
@@ -173,6 +178,9 @@ fn spawn_world_grid(
 
     commands.spawn(World {
         size: Vec2::new(w as f32, h as f32),
+        next_spawn: Timer::from_seconds(1.0, TimerMode::Once),
+        enemy_spawned: 2,
+        active_enemy: 2,
     });
 
     for x in [0, w] {
@@ -218,10 +226,10 @@ fn song_progression_system(
     mut event_reader: EventReader<EnemyKilledEvent>,
     mut world_query: Query<&mut World>,
 ) {
-    let world = world_query.single_mut();
+    let mut world = world_query.single_mut();
 
-    for event in event_reader.iter() {
-        println!("Got a kill event");
+    for _enemy_type in event_reader.iter() {
+        world.active_enemy -= 1;
     }
 }
 
@@ -281,6 +289,52 @@ fn spawn_system(
 
         song_timer.timer = Timer::from_seconds(BPM_TIMER_TIME, TimerMode::Once);
     }
+}
+
+fn enemy_spawn_system(
+    mut commands: Commands,
+    sprites: Res<Sprites>,
+    time: Res<Time>,
+    player_query: Query<&WorldPosition, With<Player>>,
+    mut world_query: Query<&mut World>,
+) {
+    let mut world = world_query.single_mut();
+
+    world.next_spawn.tick(time.delta());
+    if !world.next_spawn.finished() {
+        return;
+    }
+
+    world.next_spawn = Timer::from_seconds(1.0, TimerMode::Once);
+
+    if world.active_enemy > 5 {
+        return;
+    }
+
+    world.enemy_spawned += 1;
+    world.active_enemy += 1;
+
+    let player_pos = player_query.single();
+    let mut rng = rand::thread_rng();
+
+    let player_cell = player_pos.position / 16.;
+    let mut enemy_cell = Vec2::new(rng.gen_range(2..24) as f32, rng.gen_range(2..16) as f32);
+    while player_cell == enemy_cell {
+        enemy_cell = Vec2::new(rng.gen_range(2..24) as f32, rng.gen_range(2..16) as f32);
+    }
+
+    enemy_cell *= 16.;
+
+    commands.spawn((
+        SpriteSheetBundle {
+            texture_atlas: sprites.sheep.clone(),
+            sprite: TextureAtlasSprite::new(0),
+            ..default()
+        },
+        Enemy::default(),
+        WorldPosition::new(enemy_cell, 1.),
+        Animated::<EnemyAnimations>::default(),
+    ));
 }
 
 fn move_system(
