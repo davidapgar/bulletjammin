@@ -1,5 +1,4 @@
 use super::audio::audio_generator::*;
-use super::audio::Audio;
 use bevy::prelude::*;
 
 pub type Notes = [Option<(i32, RawSource)>; 4];
@@ -75,6 +74,10 @@ pub struct Chain {
 
 impl Chain {
     fn note(&self, mut idx: usize) -> Option<(i32, RawSource)> {
+        if self.len() == 0 {
+            return None;
+        }
+
         if idx > self.len() {
             idx = idx % self.len();
         }
@@ -128,6 +131,14 @@ pub struct Phrase {
 }
 
 impl Phrase {
+    fn silence() -> Self {
+        Self {
+            notes: "____",
+            phrase_type: PhraseType::Quarter,
+            sound_gen: Box::new(|_| Envelope::new(0.0, 0.0, 0.0, 0.0).as_raw()),
+        }
+    }
+
     fn new<G>(notes: &'static str, phrase_type: PhraseType, sound_gen: G) -> Self
     where
         G: Fn(f32) -> RawSource + Sync + Send + 'static,
@@ -241,6 +252,30 @@ fn drum(frequency: f32) -> RawSource {
     }
 }
 
+fn supersaw(frequency: f32) -> RawSource {
+    Vca::new(
+        Vco::new(
+            Vcf::new(SuperSaw::new(frequency as f32), frequency / 2., 1.0),
+            frequency / 2.,
+            Envelope::new(0.3, 0.1, 0.05, 0.2),
+        ),
+        Envelope::new(0.3, 0.05, 0.05, 0.2),
+    )
+    .as_raw()
+}
+
+fn warble(frequency: f32) -> RawSource {
+    Vca::new(
+        Vco::new(
+            RampWave::new(frequency),
+            frequency,
+            Attenuator::new(TriangleWave::new(40.), 0.2),
+        ),
+        Envelope::new(0.3, 0.01, 0.05, 0.25),
+    )
+    .as_raw()
+}
+
 pub fn mary_song() -> Song {
     Song {
         tracks: vec![
@@ -251,7 +286,97 @@ pub fn mary_song() -> Song {
                         phrases: vec![Phrase::sixteenth("009_90_0_0_0009_", drum)],
                     },
                     Chain {
-                        phrases: vec![Phrase::quarter("1234", drum), Phrase::quarter("4321", drum)],
+                        phrases: vec![
+                            Phrase::quarter("1231", drum),
+                            Phrase::sixteenth("11__22__33__11__", drum),
+                        ],
+                    },
+                ],
+            },
+            // melody
+            Track {
+                chains: vec![
+                    Chain {
+                        phrases: vec![
+                            Phrase::eigth("edcdeee_", square_horn),
+                            Phrase::eigth("ddd_cgg_", square_horn),
+                            Phrase::eigth("edcdeee_", square_horn),
+                            Phrase::eigth("ddedc___", square_horn),
+                        ],
+                    },
+                    Chain {
+                        phrases: vec![
+                            Phrase::eigth("edcdeee_", supersaw),
+                            Phrase::eigth("ddd_cgg_", supersaw),
+                            Phrase::eigth("edcdeee_", supersaw),
+                            Phrase::eigth("ddedc___", supersaw),
+                        ],
+                    },
+                ],
+            },
+            // drums
+            Track {
+                chains: vec![
+                    Chain { phrases: vec![] },
+                    Chain {
+                        phrases: vec![
+                            Phrase::quarter("1231", drum),
+                            Phrase::sixteenth("11__22__33__11__", drum),
+                        ],
+                    },
+                ],
+            },
+            // melody
+            Track {
+                chains: vec![
+                    Chain { phrases: vec![] },
+                    Chain {
+                        phrases: vec![
+                            Phrase::eigth("edcdeee_", warble),
+                            Phrase::eigth("ddd_cgg_", warble),
+                            Phrase::eigth("edcdeee_", warble),
+                            Phrase::eigth("ddedc___", warble),
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+}
+
+pub fn other_song() -> Song {
+    Song {
+        tracks: vec![
+            // drums
+            Track {
+                chains: vec![Chain {
+                    phrases: vec![Phrase::eigth("09090909", drum)],
+                }],
+            },
+            // melody
+            Track {
+                chains: vec![Chain {
+                    phrases: vec![
+                        Phrase::sixteenth("cde___e_c_____f_", supersaw),
+                        Phrase::sixteenth("__f___e_d___c___", supersaw),
+                    ],
+                }],
+            },
+        ],
+    }
+}
+
+pub fn techno() -> Song {
+    Song {
+        tracks: vec![
+            // drums
+            Track {
+                chains: vec![
+                    Chain {
+                        phrases: vec![Phrase::sixteenth("0__10___0__10___", drum)],
+                    },
+                    Chain {
+                        phrases: vec![Phrase::sixteenth("0__10_8_0__10_9_", drum)],
                     },
                 ],
             },
@@ -259,12 +384,31 @@ pub fn mary_song() -> Song {
             Track {
                 chains: vec![Chain {
                     phrases: vec![
-                        Phrase::eigth("edcdeee_", square_horn),
-                        Phrase::eigth("ddd_cgg_", square_horn),
-                        Phrase::eigth("edcdeee_", square_horn),
-                        Phrase::eigth("ddedc___", square_horn),
+                        Phrase::sixteenth("cde___e_c_____f_", supersaw),
+                        Phrase::sixteenth("__f___e_d___c___", supersaw),
                     ],
                 }],
+            },
+            // Top drums
+            Track {
+                chains: vec![
+                    Chain { phrases: vec![] },
+                    Chain {
+                        phrases: vec![Phrase::sixteenth("_4___56__4___56_", drum)],
+                    },
+                ],
+            },
+            // Counter melody
+            Track {
+                chains: vec![
+                    Chain { phrases: vec![] },
+                    Chain {
+                        phrases: vec![
+                            Phrase::sixteenth("gab___b_g_____f_", square_horn),
+                            Phrase::sixteenth("__f___a_b___g___", square_horn),
+                        ],
+                    },
+                ],
             },
         ],
     }
