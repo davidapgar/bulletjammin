@@ -12,15 +12,15 @@ use bevy::sprite::collide_aabb::{collide, Collision};
 // ~player stats on top of screen
 // ~Tracker based sound generation, tied to bullet spawning
 //  Moar tracks, tie correctly to cannon clusters.
-//  Progress the song based on <something>
+// ~Progress the song based on <something>
 // ~Only shoot on the "beat"
-//  Make this tied to track 0 triggering (drum track)
+// ~Make this tied to track 0 triggering (drum track)
 // Make it good
 // ~Enemies
 //  Add spawning, removing progresses the song.
 // ~Animations
-//  partial. Need stacking animations, repeatable.
-//  Apply to everything...
+// ~partial. Need stacking animations, repeatable.
+// ~Apply to everything...
 // !!!!!!!!!
 
 pub struct PlayerPlugin;
@@ -159,18 +159,19 @@ fn player_input_system(
     let mut player = query.single_mut();
 
     let mut movement = Vec2::default();
-    if keyboard_input.pressed(KeyCode::Up) {
-        movement.y += 2.;
+    if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
+        movement.y += 1.;
     }
-    if keyboard_input.pressed(KeyCode::Down) {
-        movement.y -= 2.;
+    if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
+        movement.y -= 1.;
     }
-    if keyboard_input.pressed(KeyCode::Left) {
-        movement.x -= 2.;
+    if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
+        movement.x -= 1.;
     }
-    if keyboard_input.pressed(KeyCode::Right) {
-        movement.x += 2.;
+    if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
+        movement.x += 1.;
     }
+    movement = movement.normalize_or_zero() * 2.;
 
     player.position += movement;
 

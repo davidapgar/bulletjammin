@@ -57,37 +57,34 @@ fn button_system(keyboard_input: Res<Input<KeyCode>>, audio: ResMut<Audio>) {
 
     let mut keys = Vec::<u32>::new();
 
-    if keyboard_input.just_pressed(KeyCode::Q) {
+    if keyboard_input.just_pressed(KeyCode::Z) {
         keys.push(0);
     }
-    if keyboard_input.just_pressed(KeyCode::W) {
+    if keyboard_input.just_pressed(KeyCode::X) {
         keys.push(2);
     }
-    if keyboard_input.just_pressed(KeyCode::E) {
+    if keyboard_input.just_pressed(KeyCode::C) {
         keys.push(4);
     }
-    if keyboard_input.just_pressed(KeyCode::R) {
+    if keyboard_input.just_pressed(KeyCode::V) {
         keys.push(5);
     }
-    if keyboard_input.just_pressed(KeyCode::T) {
+    if keyboard_input.just_pressed(KeyCode::B) {
         keys.push(7);
     }
 
     for key in keys {
         let frequency = frequency_per_volt(key as f32 / 120.0 + 0.2);
-        /*
         let vca = Vca::new(
             Vco::new(
                 //Vcf::new(SquareWave::new(frequency), frequency, 1.41),
-                //Vcf::new(SquareWave::new(frequency), frequency, 0.1),
-                Vcf::new(TriangleWave::new(frequency), frequency, 1.41),
+                Vcf::new(SquareWave::new(frequency), frequency, 0.1),
                 frequency / 2.,
-                Envelope::new(0.6, 0.2, 0.05, 0.2),
+                Envelope::new(0.4, 0.2, 0.05, 0.2),
             ),
             Envelope::new(0.3, 0.1, 0.05, 0.2),
         );
         audio.play(vca.as_raw());
-        */
         //let osc = Attenuator::new(TriangleWave::new(frequency), 2.0);
 
         /* Kick
@@ -100,10 +97,12 @@ fn button_system(keyboard_input: Res<Input<KeyCode>>, audio: ResMut<Audio>) {
         let vca = Vca::new(osc, kick_env);
         */
 
+        /* Snare
         let snare_env = Envelope::new(0.5, 0.001, 0.0, 0.3);
         let vco = NoiseLFSR::new(20000.);
         let osc = vco;
         let vca = Vca::new(osc, snare_env);
         audio.play(vca.as_raw());
+        */
     }
 }

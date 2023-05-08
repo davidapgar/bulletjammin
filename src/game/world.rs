@@ -43,7 +43,7 @@ struct SongTimer {
 impl Default for SongTimer {
     fn default() -> Self {
         SongTimer {
-            timer: Timer::default(),
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
             idx: 0,
             chain: 0,
             next_chain: false,
