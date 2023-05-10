@@ -2,7 +2,7 @@ use super::animation::{Animated, Animation, AnimationFrame, AnimationMarker};
 use super::assets::Sprites;
 use super::audio::{audio_generator::*, Audio};
 use super::world::{Bullet, BulletType, Moveable, Wall, WorldPosition};
-use super::GameState;
+use super::{EndState, GameState};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
 
@@ -42,7 +42,8 @@ impl bevy::app::Plugin for PlayerPlugin {
                     update_health_system,
                 )
                     .in_set(OnUpdate(GameState::Playing)),
-            );
+            )
+            .add_system(player_teardown.in_schedule(OnExit(GameState::GameOver)));
     }
 }
 
@@ -298,6 +299,7 @@ fn player_bullet_system(
                 audio.play(vca.as_raw());
 
                 if player.health <= 0 {
+                    commands.insert_resource(EndState::GameOver);
                     state.set(GameState::GameOver);
                 }
             }
@@ -334,5 +336,11 @@ fn update_health_system(
         } else {
             sprite.index = 0;
         }
+    }
+}
+
+fn player_teardown(mut commands: Commands, query: Query<Entity, With<Player>>) {
+    for player in &query {
+        commands.entity(player).despawn();
     }
 }

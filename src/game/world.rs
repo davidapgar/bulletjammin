@@ -5,7 +5,7 @@ use super::cannon::{spawn_cannon, Cannon};
 use super::enemy::{Enemy, EnemyAnimations, EnemyKilledEvent, EnemyType};
 use super::player::{OnBeat, Player, PlayerAnimations};
 use super::song::*;
-use super::GameState;
+use super::{EndState, GameState};
 use bevy::prelude::*;
 use rand::prelude::*;
 
@@ -16,9 +16,9 @@ impl bevy::app::Plugin for WorldPlugin {
         app.insert_resource(Sprites::default())
             //.insert_resource(mary_song())
             //.insert_resource(techno())
-            .insert_resource(SongTimer::default())
             .add_event::<EnemyKilledEvent>()
             .add_system(world_startup.in_schedule(OnEnter(GameState::Playing)))
+            .add_system(world_teardown.in_schedule(OnExit(GameState::GameOver)))
             .add_systems(
                 (
                     spawn_system,
@@ -106,6 +106,8 @@ fn world_startup(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut sprites: Res<Sprites>,
 ) {
+    commands.insert_resource(SongTimer::default());
+
     commands.spawn((
         SpriteSheetBundle {
             texture_atlas: sprites.player.clone(),
@@ -297,7 +299,8 @@ fn spawn_system(
                 song_timer.next_chain = false;
 
                 if song_timer.chain >= song.max_chains() {
-                    state.set(GameState::Winner);
+                    commands.insert_resource(EndState::Winner);
+                    state.set(GameState::GameOver);
                 }
             }
         }
@@ -374,5 +377,25 @@ fn transform_world_system(mut query: Query<(&mut Transform, &WorldPosition)>) {
             ((world_position.position - world_offset) * 2.).extend(world_position.layer),
         )
         .with_scale(Vec3::splat(2.0));
+    }
+}
+
+fn world_teardown(
+    mut commands: Commands,
+    query: Query<
+        Entity,
+        Or<(
+            With<Background>,
+            With<Wall>,
+            With<Bullet>,
+            With<World>,
+            With<WorldPosition>,
+            With<Cannon>,
+        )>,
+    >,
+) {
+    commands.remove_resource::<SongTimer>();
+    for entity in &query {
+        commands.entity(entity).despawn_recursive();
     }
 }

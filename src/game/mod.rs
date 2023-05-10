@@ -22,6 +22,11 @@ pub enum GameState {
     Menu,
     Playing,
     GameOver,
+}
+
+#[derive(Resource)]
+enum EndState {
+    GameOver,
     Winner,
 }
 

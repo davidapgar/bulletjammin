@@ -19,7 +19,8 @@ impl bevy::app::Plugin for EnemyPlugin {
                 enemy_animation_system,
             )
                 .in_set(OnUpdate(GameState::Playing)),
-        );
+        )
+        .add_system(enemy_teardown.in_schedule(OnExit(GameState::GameOver)));
     }
 }
 
@@ -228,5 +229,11 @@ fn enemy_animation_system(
                 sprite.index = frame.idx;
             }
         }
+    }
+}
+
+fn enemy_teardown(mut commands: Commands, query: Query<Entity, With<Enemy>>) {
+    for enemy in &query {
+        commands.entity(enemy).despawn();
     }
 }
